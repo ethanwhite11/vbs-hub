@@ -309,8 +309,9 @@ function GroupModal({ myGroup, onSelect, onClose }) {
 function NowHero({ myGroup, live, onChangeGroup }) {
   const C = useC()
   const g = myGroup ? GROUPS[myGroup] : null
+  const heroColor = (g && myGroup !== 'none') ? g.color : C.accent
   const safePad = 'calc(22px + env(safe-area-inset-top,0px))'
-  const greenBase = { background:C.accent, padding:`${safePad} 20px 26px`, borderRadius:'0 0 24px 24px' }
+  const greenBase = { background:heroColor, padding:`${safePad} 20px 26px`, borderRadius:'0 0 24px 24px' }
   const lightBase = { background:C.surface, padding:`${safePad} 20px 22px`, borderBottom:`1px solid ${C.border}` }
 
   const hasColorGroup = myGroup && myGroup !== 'none'
