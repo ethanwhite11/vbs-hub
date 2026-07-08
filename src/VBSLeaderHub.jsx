@@ -551,7 +551,7 @@ function TodayPage({ myGroup, live, now, onViewSchedule, onChangeGroup }) {
           const displayName = slot.allGroups ? slot.label : (myAct ? myAct.s : 'Station Rotation')
           const displayLoc  = slot.allGroups ? slot.location : myAct?.l
           return (
-            <div key={slot.i} style={{ background:active?C.accentBg:C.surface,borderRadius:12,border:`1px solid ${active?C.accentBdr:C.border}`,padding:'11px 14px',marginBottom:6,opacity:past?0.4:1 }}>
+            <div key={slot.i} style={{ borderLeft:`3px solid ${active?C.accent:C.border}`,padding:'8px 12px',marginBottom:8,opacity:past?0.35:1,background:active?C.accentBg:'transparent',borderRadius:active?'0 8px 8px 0':0 }}>
               <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2 }}>
                 <p style={{ margin:0,fontSize:14,fontWeight:active?700:500,color:active?C.accent:C.text }}>
                   {slot.emoji} {displayName}
@@ -640,7 +640,7 @@ function SchedulePage({ myGroup, live, now, onChangeGroup }) {
                 {i<SLOTS.length-1 && <div style={{ flex:1,width:1,background:C.border,marginTop:5,marginBottom:4 }} />}
               </div>
               <div style={{ flex:1,marginBottom:6 }}>
-                <div style={{ background:C.surface,borderRadius:12,padding:'10px 14px',border:`1px solid ${C.border}` }}>
+                <div style={{ background:C.surfaceHi,borderRadius:12,padding:'10px 14px',border:`1px solid ${C.border}` }}>
                   <p style={{ margin:0,fontSize:14,fontWeight:500,color:C.text,marginBottom:myAct&&!slot.allGroups?8:0 }}>
                     {slot.emoji} {slot.allGroups?slot.label:'Station Rotation'}
                   </p>
