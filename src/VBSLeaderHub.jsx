@@ -997,7 +997,14 @@ export default function VBSLeaderHub() {
   const [splash,setSplash] = useState(true)
   const [myGroup,setMyGroup] = useState(() => { try { return localStorage.getItem('rfGroup') || null } catch { return null } })
   const [page,setPage] = useState('today')
-  const [now,setNow] = useState(new Date())
+  const mockOffset = (() => {
+    try {
+      const p = new URLSearchParams(window.location.search).get('t')
+      if (p) { const d = new Date(p); if (!isNaN(d)) return d - Date.now() }
+    } catch {}
+    return 0
+  })()
+  const [now,setNow] = useState(() => new Date(Date.now() + mockOffset))
   const [changing,setChanging] = useState(false)
 
   useEffect(() => {
@@ -1005,7 +1012,7 @@ export default function VBSLeaderHub() {
     return () => { try{document.head.removeChild(s)}catch{} }
   },[])
 
-  useEffect(() => { const t=setInterval(()=>setNow(new Date()),60000); return()=>clearInterval(t) },[])
+  useEffect(() => { const t=setInterval(()=>setNow(new Date(Date.now() + mockOffset)),60000); return()=>clearInterval(t) },[mockOffset])
 
   const live = getLive(now)
 
