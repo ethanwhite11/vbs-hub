@@ -673,6 +673,7 @@ function CoffeePage({ myGroup }) {
   const [notes,setNotes]       = useState('')
   const [sent,setSent]         = useState(false)
   const [showSyrups,setShowSyrups] = useState(false)
+  const [payMethod,setPayMethod] = useState('')  // 'tab' | 'counter'
   const [pickup,setPickup]     = useState(true)
   const [deliverTo,setDeliverTo] = useState(() => {
     if (!myGroup || myGroup === 'none') return ''
@@ -694,7 +695,7 @@ function CoffeePage({ myGroup }) {
     return exists ? prev.filter(s => s.name !== sName) : [...prev, { name: sName, sf: false }]
   })
   const toggleSF = sName => setSyrups(prev => prev.map(s => s.name === sName ? { ...s, sf: !s.sf } : s))
-  const can = name.trim() && drink && (isSpecialtyCold || size) && (!syrupRequired || syrupCount > 0)
+  const can = name.trim() && drink && (isSpecialtyCold || size) && (!syrupRequired || syrupCount > 0) && payMethod
 
   const buildMsg = () => {
     const drinkLabel = isIced ? `Iced ${drink}` : drink
@@ -707,7 +708,8 @@ function CoffeePage({ myGroup }) {
     const deliveryStr = pickup
       ? ' (pickup)'
       : deliverTo.trim() ? ` (deliver → ${deliverTo.trim()})` : ' (pickup)'
-    return `VBS Order from ${name.trim()}${deliveryStr}: ${drinkLabel}${sizeStr}${milkStr}${syrupStr}${noteStr}`
+    const payStr = payMethod === 'tab' ? ' [on tab]' : ' [paying at pickup]'
+    return `VBS Order from ${name.trim()}${deliveryStr}${payStr}: ${drinkLabel}${sizeStr}${milkStr}${syrupStr}${noteStr}`
   }
 
   const send = () => {
@@ -862,15 +864,38 @@ function CoffeePage({ myGroup }) {
         {/* ── Pickup or delivery ── */}
         <FL>Pickup or delivery?</FL>
         <div style={{ display:'flex',gap:8 }}>
-          <Tap onClick={() => setPickup(true)}
+          <Tap onClick={() => { setPickup(true); setPayMethod('') }}
             style={{ flex:1,padding:'11px',borderRadius:10,border:`1.5px solid ${pickup?C.accent:C.border}`,background:pickup?C.accentBg:C.surface,textAlign:'center' }}>
             <span style={{ fontSize:13,fontWeight:700,color:pickup?C.accent:C.muted }}>I'll pick it up</span>
           </Tap>
-          <Tap onClick={() => setPickup(false)}
+          <Tap onClick={() => { setPickup(false); setPayMethod('tab') }}
             style={{ flex:1,padding:'11px',borderRadius:10,border:`1.5px solid ${!pickup?C.accent:C.border}`,background:!pickup?C.accentBg:C.surface,textAlign:'center' }}>
             <span style={{ fontSize:13,fontWeight:700,color:!pickup?C.accent:C.muted }}>Deliver it</span>
           </Tap>
         </div>
+
+        {/* ── Payment method (pickup only) ── */}
+        {pickup && (
+          <>
+            <FL>How are you paying?</FL>
+            <div style={{ display:'flex',gap:8 }}>
+              <Tap onClick={() => setPayMethod('tab')}
+                style={{ flex:1,padding:'11px 8px',borderRadius:10,border:`1.5px solid ${payMethod==='tab'?C.accent:C.border}`,background:payMethod==='tab'?C.accentBg:C.surface,textAlign:'center' }}>
+                <span style={{ fontSize:13,fontWeight:700,color:payMethod==='tab'?C.accent:C.muted }}>I'm on the tab</span>
+              </Tap>
+              <Tap onClick={() => setPayMethod('counter')}
+                style={{ flex:1,padding:'11px 8px',borderRadius:10,border:`1.5px solid ${payMethod==='counter'?C.accent:C.border}`,background:payMethod==='counter'?C.accentBg:C.surface,textAlign:'center' }}>
+                <span style={{ fontSize:13,fontWeight:700,color:payMethod==='counter'?C.accent:C.muted }}>Pay at counter</span>
+              </Tap>
+            </div>
+            {payMethod === 'tab' && (
+              <p style={{ margin:'6px 0 0',fontSize:11,color:C.muted }}>Carolyn will deduct this from your tab balance</p>
+            )}
+            {payMethod === 'counter' && (
+              <p style={{ margin:'6px 0 0',fontSize:11,color:C.muted }}>Cash or card — pay when you pick up your order</p>
+            )}
+          </>
+        )}
         {!pickup && (
           <SCard style={{ padding:'12px 14px',marginTop:8 }}>
             <input value={deliverTo} onChange={e => setDeliverTo(e.target.value)}
@@ -898,7 +923,7 @@ function CoffeePage({ myGroup }) {
         <Tap onClick={send} disabled={!can}
           style={{ padding:'15px',borderRadius:14,textAlign:'center',background:can?C.accent:C.surfaceHi,border:can?'none':`1px solid ${C.border}`,marginTop:16 }}>
           <span style={{ fontSize:15,fontWeight:700,color:can?'#fff':C.muted }}>
-            {can ? '☕  Send Order via Text' : syrupRequired && syrupCount===0 ? 'Pick a syrup flavor first' : 'Fill in name, drink & size first'}
+            {can ? '☕  Send Order via Text' : syrupRequired && syrupCount===0 ? 'Pick a syrup flavor first' : !payMethod && name.trim() && drink ? 'Choose a payment method first' : 'Fill in name, drink & size first'}
           </span>
         </Tap>
         <p style={{ textAlign:'center',fontSize:11,color:C.muted,marginTop:8,marginBottom:0 }}>Opens your texting app — just hit send</p>
