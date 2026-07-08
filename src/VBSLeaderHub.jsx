@@ -29,6 +29,14 @@ const TH = {
 const TC = createContext(TH)
 const useC = () => useContext(TC)
 
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
+  return `rgba(${r},${g},${b},${alpha})`
+}
+function makeTheme(color, bg, bdr) {
+  return { ...TH, accent:color, accentBg:bg, accentBdr:bdr, brand:color, brandBg:bg, brandBdr:bdr, banBg:color, banBdr:bdr }
+}
+
 // ─── GROUPS ───────────────────────────────────────────────────────────────────
 const GROUPS = {
   red:    { color:'#E05252', bg:'rgba(224,82,82,0.10)',   dark:'rgba(224,82,82,0.18)',   label:'Red',                short:'Red', delivery:'Red Group'    },
@@ -309,9 +317,8 @@ function GroupModal({ myGroup, onSelect, onClose }) {
 function NowHero({ myGroup, live, onChangeGroup }) {
   const C = useC()
   const g = myGroup ? GROUPS[myGroup] : null
-  const heroColor = (g && myGroup !== 'none') ? g.color : C.accent
   const safePad = 'calc(22px + env(safe-area-inset-top,0px))'
-  const greenBase = { background:heroColor, padding:`${safePad} 20px 26px`, borderRadius:'0 0 24px 24px' }
+  const greenBase = { background:C.accent, padding:`${safePad} 20px 26px`, borderRadius:'0 0 24px 24px' }
   const lightBase = { background:C.surface, padding:`${safePad} 20px 22px`, borderBottom:`1px solid ${C.border}` }
 
   const hasColorGroup = myGroup && myGroup !== 'none'
@@ -1129,9 +1136,9 @@ function BottomNav({ page, setPage }) {
         const on = page===id
         return (
           <button key={id} onClick={()=>setPage(id)} style={{ flex:1,background:'none',border:'none',cursor:'pointer',padding:'10px 0 8px',display:'flex',flexDirection:'column',alignItems:'center',gap:2 }}>
-            <div style={{ height:3,width:20,borderRadius:99,background:on?TH.accent:'transparent',marginBottom:4,transition:'background 0.2s' }} />
-            <Icon size={22} strokeWidth={1.75} color={on?TH.accent:TH.muted} style={{ transition:'color 0.2s' }} />
-            <span style={{ fontSize:10,fontWeight:on?700:500,color:on?TH.accent:TH.muted,letterSpacing:'0.04em',transition:'color 0.2s' }}>{label}</span>
+            <div style={{ height:3,width:20,borderRadius:99,background:on?C.accent:'transparent',marginBottom:4,transition:'background 0.2s' }} />
+            <Icon size={22} strokeWidth={1.75} color={on?C.accent:C.muted} style={{ transition:'color 0.2s' }} />
+            <span style={{ fontSize:10,fontWeight:on?700:500,color:on?C.accent:C.muted,letterSpacing:'0.04em',transition:'color 0.2s' }}>{label}</span>
           </button>
         )
       })}
@@ -1167,8 +1174,18 @@ export default function VBSLeaderHub() {
   const saveGroup = g => { try { localStorage.setItem('rfGroup', g) } catch {} setMyGroup(g) }
   if (!myGroup) return <TC.Provider value={TH}><GroupPicker onSelect={saveGroup} /></TC.Provider>
 
+  const activeTheme = (() => {
+    if (myGroup && myGroup !== 'none') {
+      const g = GROUPS[myGroup]
+      return makeTheme(g.color, g.bg, g.dark)
+    }
+    const di = live.dayIdx >= 0 ? live.dayIdx : (live.status === 'done' ? DAYS.length - 1 : 0)
+    const dayColor = DAYS[di].accentColor
+    return makeTheme(dayColor, hexToRgba(dayColor, 0.10), hexToRgba(dayColor, 0.28))
+  })()
+
   return (
-    <TC.Provider value={TH}>
+    <TC.Provider value={activeTheme}>
       <div style={{ background:TH.bg,minHeight:'100vh',color:TH.text,fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",maxWidth:430,margin:'0 auto',position:'relative' }}>
         <div key={page} style={{ animation:'tabFade 220ms cubic-bezier(0.2,0,0,1) both' }}>
           {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onViewSchedule={()=>setPage('schedule')} onChangeGroup={()=>setChanging(true)} />}
