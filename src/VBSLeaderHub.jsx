@@ -71,11 +71,11 @@ const ROT = {
 
 // ─── DAILY DATA ───────────────────────────────────────────────────────────────
 const DAYS = [
-  { n:1,date:'2026-07-13',label:'Mon · July 13',point:'God is our creator.',passage:'Genesis 1',verseRef:'Psalm 103:22',verseText:'"Let everything he has created praise the Lord, for he has given the order."',buddy:'Tango 🦜',accentColor:'#F0B429',icebreaker:"What's the coolest thing God made that you've ever seen in nature?",reminders:['Introduce yourself to every kid in your group today','Help your crew come up with a name or cheer','Watch for God Sightings — share one of yours first to model it','Response to Bible Point: "Wow, God!" — model it before they echo it','Encourage every kid to write their first God Sighting'] },
-  { n:2,date:'2026-07-14',label:'Tue · July 14',point:'God knows everything.',passage:'Psalm 139',verseRef:'Psalm 139:1',verseText:'"O Lord, you have examined my heart and know everything about me."',buddy:'Seymour 🦎',accentColor:'#9B5CF6',icebreaker:"What's something surprising about yourself that most people don't know?",reminders:["You should know every kid's name by now — use them constantly","Connect today's point to God Sightings from yesterday",'Affirm kids who were brave enough to share yesterday','Check in: is anyone having a hard time so far?','Keep crew transitions tight — things should be running smoother'] },
-  { n:3,date:'2026-07-15',label:'Wed · July 15',point:'God is our safe place.',passage:'1 Samuel 23–24',verseRef:'Psalm 142:5',verseText:'"Then I pray to you, O Lord. I say, \'You are my place of refuge.\'"',buddy:'Dottie 🐦',accentColor:'#3B82F6',icebreaker:"Where's your favorite place to go when you need to feel safe or calm?",reminders:["Hump day — energy may dip. Keep transitions fun and snappy","The 'safe place' theme lands deep for some kids — stay emotionally present",'Pull aside a quieter kid and check in one-on-one','Remind your crew they can always come to you if something feels wrong','Celebrate God Sightings loudly — the habit is forming'] },
-  { n:4,date:'2026-07-16',label:'Thu · July 16',point:'God is love.',passage:'Luke 22:39–24:12',verseRef:'Psalm 136:1',verseText:'"Give thanks to the Lord, for he is good! His faithful love endures forever."',buddy:'Tia 🦋',accentColor:'#E05252',icebreaker:"What's the nicest thing someone has done for you?",reminders:["One more day after this — make every moment count","Go out of your way for any kid who's been on the fringe all week",'Operation Kid-to-Kid giving — encourage generosity, never pressure','Write a personal encouragement note to each kid in your group','Finish strong — the last impression matters as much as the first'] },
-  { n:5,date:'2026-07-17',label:'Fri · July 17',point:'God is forever.',passage:'Revelation 7:17; 21–22',verseRef:'Psalm 115:18',verseText:'"But we will bless the Lord both now and forever. Praise the Lord!"',buddy:'Howie 🦗',accentColor:'#4ACC80',icebreaker:"If you could do one thing forever, what would it be?",reminders:['Last day — make it unforgettable for every kid in your group','Families join Canopy Closing today — help your crew shine','Personally affirm each kid before they leave','Collect any remaining God Sightings for the display board','Thank your team and celebrate what God did this week'] },
+  { n:1,date:'2026-07-13',label:'Mon · July 13',point:'God is our creator.',passage:'Genesis 1',verseRef:'Psalm 103:22',verseText:'"Let everything he has created praise the Lord, for he has given the order."',buddy:'Tango',accentColor:'#F0B429',icebreaker:"What's the coolest thing God made that you've ever seen in nature?",reminders:['Introduce yourself to every kid in your group today','Help your crew come up with a name or cheer','Watch for God Sightings — share one of yours first to model it','Response to Bible Point: "Wow, God!" — model it before they echo it','Encourage every kid to write their first God Sighting'] },
+  { n:2,date:'2026-07-14',label:'Tue · July 14',point:'God knows everything.',passage:'Psalm 139',verseRef:'Psalm 139:1',verseText:'"O Lord, you have examined my heart and know everything about me."',buddy:'Seymour',accentColor:'#9B5CF6',icebreaker:"What's something surprising about yourself that most people don't know?",reminders:["You should know every kid's name by now — use them constantly","Connect today's point to God Sightings from yesterday",'Affirm kids who were brave enough to share yesterday','Check in: is anyone having a hard time so far?','Keep crew transitions tight — things should be running smoother'] },
+  { n:3,date:'2026-07-15',label:'Wed · July 15',point:'God is our safe place.',passage:'1 Samuel 23–24',verseRef:'Psalm 142:5',verseText:'"Then I pray to you, O Lord. I say, \'You are my place of refuge.\'"',buddy:'Dottie',accentColor:'#3B82F6',icebreaker:"Where's your favorite place to go when you need to feel safe or calm?",reminders:["Hump day — energy may dip. Keep transitions fun and snappy","The 'safe place' theme lands deep for some kids — stay emotionally present",'Pull aside a quieter kid and check in one-on-one','Remind your crew they can always come to you if something feels wrong','Celebrate God Sightings loudly — the habit is forming'] },
+  { n:4,date:'2026-07-16',label:'Thu · July 16',point:'God is love.',passage:'Luke 22:39–24:12',verseRef:'Psalm 136:1',verseText:'"Give thanks to the Lord, for he is good! His faithful love endures forever."',buddy:'Tia',accentColor:'#E05252',icebreaker:"What's the nicest thing someone has done for you?",reminders:["One more day after this — make every moment count","Go out of your way for any kid who's been on the fringe all week",'Operation Kid-to-Kid giving — encourage generosity, never pressure','Write a personal encouragement note to each kid in your group','Finish strong — the last impression matters as much as the first'] },
+  { n:5,date:'2026-07-17',label:'Fri · July 17',point:'God is forever.',passage:'Revelation 7:17; 21–22',verseRef:'Psalm 115:18',verseText:'"But we will bless the Lord both now and forever. Praise the Lord!"',buddy:'Howie',accentColor:'#4ACC80',icebreaker:"If you could do one thing forever, what would it be?",reminders:['Last day — make it unforgettable for every kid in your group','Families join Canopy Closing today — help your crew shine','Personally affirm each kid before they leave','Collect any remaining God Sightings for the display board','Thank your team and celebrate what God did this week'] },
 ]
 
 // ─── COFFEE ───────────────────────────────────────────────────────────────────
@@ -125,19 +125,32 @@ const JOKES = [
   {q:"What do you call a snake that works for the government?",a:"A civil serpent!"},
 ]
 
-const FACTS = [
-  "The Amazon rainforest produces about 20% of the world's oxygen — it's called the lungs of the Earth.",
-  "There are more species of fish in the Amazon River than in the entire Atlantic Ocean.",
-  "A typical 4-square-mile patch of rainforest contains 400 species of birds.",
-  "Rainforests are so dense it can take 10 minutes for rain to reach the forest floor after falling.",
-  "The poison dart frog gets its toxins from its diet. In captivity, they become non-toxic over time.",
-  "A toucan's beak can be half the length of its body — but it's actually very lightweight inside.",
-  "The capybara is the world's largest rodent and loves to swim. It can even sleep in water.",
-  "The sloth moves so slowly that algae grows on its fur, which helps it blend into the trees.",
-  "Leafcutter ants can carry 50 times their own body weight.",
-  "Over 25% of modern medicines come from plants found in the rainforest.",
-  "The harpy eagle has talons as large as a grizzly bear's claws and can carry prey its own size.",
-  "Some rainforest trees live for over 1,000 years.",
+const ICEBREAKERS = [
+  "If you could have any superpower, what would it be and why?",
+  "What's the funniest thing that has ever happened to you?",
+  "If you could only eat one food for the rest of your life, what would it be?",
+  "Would you rather be able to fly or be invisible? Why?",
+  "What's your favorite thing to do on a Saturday morning?",
+  "If you could have any animal as a pet, what would you choose?",
+  "What's the best gift you've ever received?",
+  "If you could visit any place in the world, where would you go?",
+  "What's a talent or skill you have that might surprise people?",
+  "Would you rather live in the ocean or on the moon?",
+  "What's your go-to karaoke song (even if you'd never actually sing it)?",
+  "If you could swap lives with any cartoon character for a day, who would it be?",
+  "What's the weirdest food combination you actually love?",
+  "If you started a YouTube channel, what would it be about?",
+  "What's one thing on your bucket list?",
+  "Would you rather always be too hot or always be too cold?",
+  "What's the best movie you've seen in the last year?",
+  "If you could invent something that doesn't exist yet, what would it be?",
+  "What's something you're really proud of that you've made or built?",
+  "If you could be any age for a whole year, what age would you pick?",
+  "What's the bravest thing you've ever done?",
+  "Would you rather be the funniest person in the room or the smartest?",
+  "What's a show or game you could play or watch for hours without getting bored?",
+  "If your life was a movie, what genre would it be?",
+  "If you could add one rule to your school or family, what would it be?",
 ]
 
 const TIPS = [
@@ -448,10 +461,10 @@ function CrewKit() {
   return (
     <div style={{ background:C.surface,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden' }}>
       <div style={{ display:'flex' }}>
-        {['joke','fact','tip'].map(t => (
+        {['joke','ice','tip'].map(t => (
           <Tap key={t} onClick={()=>setTab(t)} style={{ flex:1,padding:'12px 0',textAlign:'center',borderBottom:`2px solid ${tab===t?C.accent:C.border}` }}>
             <span style={{ fontSize:13,fontWeight:tab===t?700:500,color:tab===t?C.accent:C.muted }}>
-              {t === 'joke' ? 'Joke' : t === 'fact' ? 'Fact' : 'Tip'}
+              {t === 'joke' ? 'Joke' : t === 'ice' ? 'Icebreaker' : 'Tip'}
             </span>
           </Tap>
         ))}
@@ -474,12 +487,12 @@ function CrewKit() {
             </Tap>
           </>
         )}
-        {tab === 'fact' && (
+        {tab === 'ice' && (
           <>
-            <p style={{ margin:'0 0 12px',fontSize:14,color:C.text,lineHeight:1.6 }}>🌿 {FACTS[fi]}</p>
-            <Tap onClick={()=>setFi(i=>(i+1)%FACTS.length)} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',borderRadius:8,border:`1px solid ${C.border}` }}>
+            <p style={{ margin:'0 0 12px',fontSize:14,color:C.text,lineHeight:1.6 }}>{ICEBREAKERS[fi]}</p>
+            <Tap onClick={()=>setFi(i=>(i+1)%ICEBREAKERS.length)} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',borderRadius:8,border:`1px solid ${C.border}` }}>
               <RefreshCw size={13} color={C.muted} strokeWidth={2} />
-              <span style={{ fontSize:12,color:C.muted,fontWeight:600 }}>Next Fact ({fi+1}/{FACTS.length})</span>
+              <span style={{ fontSize:12,color:C.muted,fontWeight:600 }}>Next Question ({fi+1}/{ICEBREAKERS.length})</span>
             </Tap>
           </>
         )}
