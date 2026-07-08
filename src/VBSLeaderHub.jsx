@@ -31,12 +31,13 @@ const useC = () => useContext(TC)
 
 // ─── GROUPS ───────────────────────────────────────────────────────────────────
 const GROUPS = {
-  red:    { color:'#E05252', bg:'rgba(224,82,82,0.10)',   dark:'rgba(224,82,82,0.18)',   label:'Red',    short:'Red' },
-  yellow: { color:'#D4A017', bg:'rgba(212,160,23,0.10)',  dark:'rgba(212,160,23,0.18)',  label:'Yellow', short:'Yel' },
-  green:  { color:'#38A85A', bg:'rgba(56,168,90,0.10)',   dark:'rgba(56,168,90,0.18)',   label:'Green',  short:'Grn' },
-  blue:   { color:'#3B82F6', bg:'rgba(59,130,246,0.10)',  dark:'rgba(59,130,246,0.18)',  label:'Blue',   short:'Blu' },
-  purple: { color:'#9B5CF6', bg:'rgba(155,92,246,0.10)',  dark:'rgba(155,92,246,0.18)',  label:'Purple', short:'Pur' },
-  orange: { color:'#F97316', bg:'rgba(249,115,22,0.10)',  dark:'rgba(249,115,22,0.18)',  label:'Orange · Preschool', short:'Pre' },
+  red:    { color:'#E05252', bg:'rgba(224,82,82,0.10)',   dark:'rgba(224,82,82,0.18)',   label:'Red',                short:'Red', delivery:'Red Group'    },
+  yellow: { color:'#D4A017', bg:'rgba(212,160,23,0.10)',  dark:'rgba(212,160,23,0.18)',  label:'Yellow',             short:'Yel', delivery:'Yellow Group' },
+  green:  { color:'#38A85A', bg:'rgba(56,168,90,0.10)',   dark:'rgba(56,168,90,0.18)',   label:'Green',              short:'Grn', delivery:'Green Group'  },
+  blue:   { color:'#3B82F6', bg:'rgba(59,130,246,0.10)',  dark:'rgba(59,130,246,0.18)',  label:'Blue',               short:'Blu', delivery:'Blue Group'   },
+  purple: { color:'#9B5CF6', bg:'rgba(155,92,246,0.10)',  dark:'rgba(155,92,246,0.18)',  label:'Purple',             short:'Pur', delivery:'Purple Group' },
+  orange: { color:'#F97316', bg:'rgba(249,115,22,0.10)',  dark:'rgba(249,115,22,0.18)',  label:'Orange · Preschool', short:'Pre', delivery:'Orange Group' },
+  none:   { color:'#888888', bg:'rgba(136,136,136,0.10)', dark:'rgba(136,136,136,0.18)', label:'No Group',           short:'',    delivery:''             },
 }
 
 // ─── SCHEDULE DATA ────────────────────────────────────────────────────────────
@@ -71,6 +72,7 @@ const DAYS = [
 // ─── COFFEE ───────────────────────────────────────────────────────────────────
 const MENU = {
   hot:  { label:'Hot',  emoji:'☕', items:['Americano','Latte / Cappuccino','Almond Milk Latte','Breve Latte','Mocha','Caramel Macchiato','Chai Tea Latte','London Fog','Hot Chocolate'] },
+  iced: { label:'Iced', emoji:'❄️', items:['Americano','Latte / Cappuccino','Almond Milk Latte','Breve Latte','Mocha','Caramel Macchiato','Chai Tea Latte'] },
   cold: { label:'Cold', emoji:'🧊', items:['Italian Soda','Joe Chill','Chai Chill','Fruit Smoothie'] },
 }
 const SYRUPS = [
@@ -239,16 +241,19 @@ function GroupPicker({ onSelect }) {
         <p style={{ margin:0,fontSize:14,color:C.muted,lineHeight:1.5 }}>Choose your color group to personalize your schedule view.</p>
       </div>
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,flex:1 }}>
-        {Object.entries(GROUPS).map(([key,g]) => (
+        {Object.entries(GROUPS).filter(([k]) => k !== 'none').map(([key,g]) => (
           <Tap key={key} onClick={()=>setSel(key)} style={{ background:sel===key?g.dark:C.surface,border:`2px solid ${sel===key?g.color:C.border}`,borderRadius:18,padding:'22px 14px',textAlign:'center' }}>
             <div style={{ width:44,height:44,borderRadius:'50%',background:g.color,margin:'0 auto 12px',boxShadow:sel===key?`0 0 18px ${g.color}50`:'none' }} />
             <p style={{ margin:0,fontSize:14,fontWeight:700,color:sel===key?g.color:C.text,lineHeight:1.3 }}>{g.label}</p>
           </Tap>
         ))}
       </div>
-      <Tap onClick={()=>sel&&onSelect(sel)} disabled={!sel} style={{ marginTop:20,padding:'15px',borderRadius:14,textAlign:'center',background:sel?GROUPS[sel].color:C.surfaceHi }}>
+      <Tap onClick={()=>setSel('none')} style={{ marginTop:10,padding:'14px',borderRadius:14,textAlign:'center',background:sel==='none'?GROUPS.none.dark:C.surface,border:`2px solid ${sel==='none'?GROUPS.none.color:C.border}` }}>
+        <span style={{ fontSize:14,fontWeight:600,color:sel==='none'?GROUPS.none.color:C.muted }}>I'm not in a color group (station leader, stage, staff)</span>
+      </Tap>
+      <Tap onClick={()=>sel&&onSelect(sel)} disabled={!sel} style={{ marginTop:10,padding:'15px',borderRadius:14,textAlign:'center',background:sel?GROUPS[sel].color:C.surfaceHi }}>
         <span style={{ fontSize:15,fontWeight:700,color:sel?'#fff':C.muted }}>
-          {sel?`I'm on the ${GROUPS[sel].label} group`:'Select a group above'}
+          {sel==='none'?'Continue as staff / no group':sel?`I'm on the ${GROUPS[sel].label} group`:'Select a group above'}
         </span>
       </Tap>
     </div>
@@ -286,14 +291,15 @@ function NowHero({ myGroup, live, onChangeGroup }) {
   const greenBase = { background:C.accent, padding:`${safePad} 20px 26px`, borderRadius:'0 0 24px 24px' }
   const lightBase = { background:C.surface, padding:`${safePad} 20px 22px`, borderBottom:`1px solid ${C.border}` }
 
-  const WhiteBadge = () => !g ? null : (
+  const hasColorGroup = myGroup && myGroup !== 'none'
+  const WhiteBadge = () => !hasColorGroup ? null : (
     <Tap onClick={onChangeGroup} style={{ background:'rgba(255,255,255,0.2)',borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
       <div style={{ width:7,height:7,borderRadius:'50%',background:'rgba(255,255,255,0.9)' }} />
       <span style={{ fontSize:11,fontWeight:700,color:'#fff' }}>{g.label.split(' ')[0]}</span>
     </Tap>
   )
 
-  const ColorBadge = () => !g ? null : (
+  const ColorBadge = () => !hasColorGroup ? null : (
     <Tap onClick={onChangeGroup} style={{ background:g.bg,border:`1px solid ${g.color}50`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
       <div style={{ width:7,height:7,borderRadius:'50%',background:g.color }} />
       <span style={{ fontSize:11,fontWeight:700,color:g.color }}>{g.label.split(' ')[0]}</span>
@@ -564,7 +570,7 @@ function SchedulePage({ myGroup, live, now, onChangeGroup }) {
       <div style={{ padding:'calc(22px + env(safe-area-inset-top,0px)) 16px 14px' }}>
         <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4 }}>
           <h2 style={{ margin:0,fontSize:28,fontWeight:700,color:C.text }}>Schedule</h2>
-          {g && (
+          {g && myGroup !== 'none' && (
             <Tap onClick={onChangeGroup} style={{ background:g.bg,border:`1px solid ${g.color}50`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:6 }}>
               <div style={{ width:8,height:8,borderRadius:'50%',background:g.color }} />
               <span style={{ fontSize:11,fontWeight:700,color:g.color }}>{g.label.split(' ')[0]}</span>
@@ -640,7 +646,7 @@ function SchedulePage({ myGroup, live, now, onChangeGroup }) {
 }
 
 // ─── COFFEE PAGE ──────────────────────────────────────────────────────────────
-function CoffeePage() {
+function CoffeePage({ myGroup }) {
   const C = useC()
   const [name,setName]         = useState('')
   const [cat,setCat]           = useState('hot')
@@ -653,33 +659,44 @@ function CoffeePage() {
   const [sent,setSent]         = useState(false)
   const [showExtras,setShowExtras] = useState(false)
   const [showSyrups,setShowSyrups] = useState(false)
+  const [pickup,setPickup]     = useState(true)
+  const [deliverTo,setDeliverTo] = useState(() => {
+    if (!myGroup || myGroup === 'none') return ''
+    return GROUPS[myGroup]?.delivery || ''
+  })
 
-  const isCold        = cat === 'cold'
-  const syrupRequired = drink && SYRUP_REQUIRED.has(drink)
-  const showMilk      = !isCold && drink && MILK_ELIGIBLE.has(drink)
-  const syrupCount    = syrups.length
+  const isSpecialtyCold = cat === 'cold'
+  const isIced          = cat === 'iced'
+  const needsSize       = cat !== 'cold'
+  const syrupRequired   = drink && SYRUP_REQUIRED.has(drink)
+  const showMilk        = cat !== 'cold' && drink && MILK_ELIGIBLE.has(drink)
+  const syrupCount      = syrups.length
 
   const switchCat = key => { setCat(key); setDrink(''); setSize(''); setMilk(''); setSyrups([]); setShowSyrups(false) }
   const pickDrink = item => { setDrink(item); setMilk(''); setSyrups([]); setShowSyrups(false) }
 
-  const toggleSyrup = name => setSyrups(prev => {
-    const exists = prev.find(s => s.name === name)
-    return exists ? prev.filter(s => s.name !== name) : [...prev, { name, sf: false }]
+  const toggleSyrup = sName => setSyrups(prev => {
+    const exists = prev.find(s => s.name === sName)
+    return exists ? prev.filter(s => s.name !== sName) : [...prev, { name: sName, sf: false }]
   })
-  const toggleSF = name => setSyrups(prev => prev.map(s => s.name === name ? { ...s, sf: !s.sf } : s))
+  const toggleSF = sName => setSyrups(prev => prev.map(s => s.name === sName ? { ...s, sf: !s.sf } : s))
   const toggleEx = item => setExSel(p => p.includes(item) ? p.filter(x => x !== item) : [...p, item])
 
-  const can = name.trim() && drink && (isCold || size) && (!syrupRequired || syrupCount > 0)
+  const can = name.trim() && drink && (isSpecialtyCold || size) && (!syrupRequired || syrupCount > 0)
 
   const buildMsg = () => {
-    const sizeStr   = isCold ? '' : ` (${size})`
-    const milkStr   = milk ? `, ${milk}` : ''
-    const syrupStr  = syrups.length
+    const drinkLabel = isIced ? `Iced ${drink}` : drink
+    const sizeStr    = needsSize ? ` (${size})` : ''
+    const milkStr    = milk ? `, ${milk}` : ''
+    const syrupStr   = syrups.length
       ? `, ${syrups.map(s => s.sf ? `${s.name} SF` : s.name).join(' + ')} syrup`
       : ''
-    const extStr    = exSel.length ? ` + ${exSel.join(', ')}` : ''
-    const noteStr   = notes.trim() ? ` — ${notes.trim()}` : ''
-    return `VBS Order from ${name.trim()}: ${drink}${sizeStr}${milkStr}${syrupStr}${extStr}${noteStr}`
+    const extStr     = exSel.length ? ` + ${exSel.join(', ')}` : ''
+    const noteStr    = notes.trim() ? ` — ${notes.trim()}` : ''
+    const deliveryStr = pickup
+      ? ' (pickup)'
+      : deliverTo.trim() ? ` (deliver → ${deliverTo.trim()})` : ' (pickup)'
+    return `VBS Order from ${name.trim()}${deliveryStr}: ${drinkLabel}${sizeStr}${milkStr}${syrupStr}${extStr}${noteStr}`
   }
 
   const send = () => {
@@ -696,13 +713,20 @@ function CoffeePage() {
     </div>
   )
 
-  const syrupSelected = name => syrups.find(s => s.name === name)
+  const syrupPicked = sName => syrups.find(s => s.name === sName)
 
   return (
     <div>
       <div style={{ padding:'calc(22px + env(safe-area-inset-top,0px)) 16px 14px' }}>
-        <h2 style={{ margin:'0 0 2px',fontSize:28,fontWeight:700,color:C.text }}>Coffee</h2>
-        <p style={{ margin:0,fontSize:13,color:C.muted }}>The Café @ Gateway · Pearson Fellowship Hall</p>
+        <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between' }}>
+          <div>
+            <h2 style={{ margin:'0 0 2px',fontSize:28,fontWeight:700,color:C.text }}>Coffee</h2>
+            <p style={{ margin:0,fontSize:13,color:C.muted }}>The Café @ Gateway</p>
+          </div>
+          <div style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:10,padding:'5px 12px',flexShrink:0,marginTop:4 }}>
+            <span style={{ fontSize:13,fontWeight:700,color:C.accent }}>$2 · All drinks</span>
+          </div>
+        </div>
       </div>
 
       <div style={{ padding:'0 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
@@ -721,18 +745,18 @@ function CoffeePage() {
             style={{ width:'100%',background:'transparent',border:'none',outline:'none',fontSize:16,color:C.text,fontFamily:'inherit',padding:0 }} />
         </SCard>
 
-        {/* ── Hot / Cold ── */}
-        <FL>Hot or cold?</FL>
+        {/* ── Temperature ── */}
+        <FL>Temperature</FL>
         <div style={{ display:'flex',gap:8 }}>
           {Object.entries(MENU).map(([key,m]) => (
             <Tap key={key} onClick={() => switchCat(key)}
-              style={{ flex:1,padding:'12px',borderRadius:12,border:`1.5px solid ${cat===key?C.accent:C.border}`,background:cat===key?C.accentBg:C.surface,textAlign:'center' }}>
+              style={{ flex:1,padding:'12px 6px',borderRadius:12,border:`1.5px solid ${cat===key?C.accent:C.border}`,background:cat===key?C.accentBg:C.surface,textAlign:'center' }}>
               <span style={{ fontSize:20,display:'block',marginBottom:3 }}>{m.emoji}</span>
-              <span style={{ fontSize:13,fontWeight:700,color:cat===key?C.accent:C.muted }}>{m.label}</span>
+              <span style={{ fontSize:12,fontWeight:700,color:cat===key?C.accent:C.muted }}>{m.label}</span>
             </Tap>
           ))}
         </div>
-        {isCold && <p style={{ margin:'6px 0 0',fontSize:11,color:C.muted }}>All cold drinks are 16 oz</p>}
+        {isSpecialtyCold && <p style={{ margin:'6px 0 0',fontSize:11,color:C.muted }}>All cold drinks are 16 oz</p>}
 
         {/* ── Drink ── */}
         <FL>Choose your drink</FL>
@@ -749,8 +773,8 @@ function CoffeePage() {
           })}
         </div>
 
-        {/* ── Size (hot only) ── */}
-        {!isCold && drink && (
+        {/* ── Size (hot + iced) ── */}
+        {needsSize && drink && (
           <>
             <FL>Size</FL>
             <div style={{ display:'flex',gap:8,marginBottom:4 }}>
@@ -764,7 +788,7 @@ function CoffeePage() {
           </>
         )}
 
-        {/* ── Milk alternative (eligible hot drinks only) ── */}
+        {/* ── Milk alternative ── */}
         {showMilk && (
           <>
             <FL sub="(optional)">Milk alternative</FL>
@@ -798,32 +822,50 @@ function CoffeePage() {
             </Tap>
 
             {showSyrups && (
-              <div style={{ marginBottom:8 }}>
-                <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:6 }}>
-                  {SYRUPS.map(({ name:sName, sf:hasSF }) => {
-                    const picked = syrupSelected(sName)
-                    return (
-                      <div key={sName}>
-                        <Tap onClick={() => toggleSyrup(sName)}
-                          style={{ background:picked?C.accentBg:C.surface,border:`1.5px solid ${picked?C.accent:C.border}`,borderRadius:10,padding:'9px 12px',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-                          <span style={{ fontSize:13,fontWeight:picked?700:500,color:picked?C.accent:C.text }}>{sName}</span>
-                          {picked && <div style={{ width:6,height:6,borderRadius:'50%',background:C.accent,flexShrink:0 }} />}
+              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8 }}>
+                {SYRUPS.map(({ name:sName, sf:hasSF }) => {
+                  const picked = syrupPicked(sName)
+                  return (
+                    <div key={sName}>
+                      <Tap onClick={() => toggleSyrup(sName)}
+                        style={{ background:picked?C.accentBg:C.surface,border:`1.5px solid ${picked?C.accent:C.border}`,borderRadius:10,padding:'9px 12px',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+                        <span style={{ fontSize:13,fontWeight:picked?700:500,color:picked?C.accent:C.text }}>{sName}</span>
+                        {picked && <div style={{ width:6,height:6,borderRadius:'50%',background:C.accent,flexShrink:0 }} />}
+                      </Tap>
+                      {picked && hasSF && (
+                        <Tap onClick={() => toggleSF(sName)}
+                          style={{ marginTop:3,background:picked.sf?'rgba(22,163,74,0.15)':C.surfaceHi,border:`1px solid ${picked.sf?C.accent:C.border}`,borderRadius:7,padding:'4px 10px',textAlign:'center' }}>
+                          <span style={{ fontSize:11,fontWeight:700,color:picked.sf?C.accent:C.muted }}>
+                            {picked.sf ? '✓ Sugar Free' : 'Sugar Free?'}
+                          </span>
                         </Tap>
-                        {picked && hasSF && (
-                          <Tap onClick={() => toggleSF(sName)}
-                            style={{ marginTop:3,background:picked.sf?'rgba(22,163,74,0.15)':C.surfaceHi,border:`1px solid ${picked.sf?C.accent:C.border}`,borderRadius:7,padding:'4px 10px',textAlign:'center' }}>
-                            <span style={{ fontSize:11,fontWeight:700,color:picked.sf?C.accent:C.muted }}>
-                              {picked.sf ? '✓ Sugar Free' : 'Sugar Free?'}
-                            </span>
-                          </Tap>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </>
+        )}
+
+        {/* ── Pickup or delivery ── */}
+        <FL>Pickup or delivery?</FL>
+        <div style={{ display:'flex',gap:8 }}>
+          <Tap onClick={() => setPickup(true)}
+            style={{ flex:1,padding:'11px',borderRadius:10,border:`1.5px solid ${pickup?C.accent:C.border}`,background:pickup?C.accentBg:C.surface,textAlign:'center' }}>
+            <span style={{ fontSize:13,fontWeight:700,color:pickup?C.accent:C.muted }}>I'll pick it up</span>
+          </Tap>
+          <Tap onClick={() => setPickup(false)}
+            style={{ flex:1,padding:'11px',borderRadius:10,border:`1.5px solid ${!pickup?C.accent:C.border}`,background:!pickup?C.accentBg:C.surface,textAlign:'center' }}>
+            <span style={{ fontSize:13,fontWeight:700,color:!pickup?C.accent:C.muted }}>Deliver it</span>
+          </Tap>
+        </div>
+        {!pickup && (
+          <SCard style={{ padding:'12px 14px',marginTop:8 }}>
+            <input value={deliverTo} onChange={e => setDeliverTo(e.target.value)}
+              placeholder="Where? (e.g. Blue Group, Wild Games station, Stage…)"
+              style={{ width:'100%',background:'transparent',border:'none',outline:'none',fontSize:14,color:C.text,fontFamily:'inherit',padding:0 }} />
+          </SCard>
         )}
 
         {/* ── Extras ── */}
@@ -957,7 +999,7 @@ export default function VBSLeaderHub() {
         <div key={page} style={{ animation:'tabFade 220ms cubic-bezier(0.2,0,0,1) both' }}>
           {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onViewSchedule={()=>setPage('schedule')} onChangeGroup={()=>setChanging(true)} />}
           {page==='schedule' && <SchedulePage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} />}
-          {page==='coffee'   && <CoffeePage />}
+          {page==='coffee'   && <CoffeePage myGroup={myGroup} />}
           {page==='crew'     && <CrewPage live={live} />}
         </div>
         <BottomNav page={page} setPage={setPage} />
