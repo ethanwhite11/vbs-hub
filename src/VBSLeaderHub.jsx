@@ -509,7 +509,6 @@ function TodayPage({ myGroup, live, now, onViewSchedule, onChangeGroup }) {
   const C = useC()
   const dayIdx = live.dayIdx >= 0 ? live.dayIdx : (now < new Date('2026-07-13') ? 0 : DAYS.length - 1)
   const day = DAYS[dayIdx]
-  const [showReminders, setShowReminders] = useState(false)
   const cur = now.getHours() * 60 + now.getMinutes()
   const inVbs = ['live','before','after'].includes(live.status)
 
@@ -557,18 +556,6 @@ function TodayPage({ myGroup, live, now, onViewSchedule, onChangeGroup }) {
           <ChevronRight size={14} color={C.accent} />
         </Tap>
 
-        <Tap onClick={()=>setShowReminders(p=>!p)} style={{ background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:showReminders?8:0 }}>
-          <span style={{ fontSize:14,fontWeight:600,color:C.text }}>
-            Reminders <span style={{ color:C.muted,fontWeight:400,fontSize:13 }}>({day.reminders.length})</span>
-          </span>
-          <ChevronDown size={16} color={C.muted} style={{ transform:showReminders?'rotate(180deg)':'rotate(0)',transition:'transform 0.2s ease',flexShrink:0 }} />
-        </Tap>
-        {showReminders && day.reminders.map((r,i) => (
-          <div key={i} style={{ background:C.surface,borderRadius:12,border:`1px solid ${C.border}`,padding:'12px 14px',marginBottom:8,display:'flex',gap:12,alignItems:'flex-start' }}>
-            <div style={{ width:22,height:22,borderRadius:6,background:C.accentBg,color:C.accent,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0,marginTop:1,border:`1px solid ${C.accentBdr}` }}>{i+1}</div>
-            <p style={{ margin:0,fontSize:14,color:C.text,lineHeight:1.55,flex:1 }}>{r}</p>
-          </div>
-        ))}
       </div>
     </div>
   )
@@ -670,10 +657,8 @@ function CoffeePage({ myGroup }) {
   const [size,setSize]         = useState('')
   const [milk,setMilk]         = useState('')
   const [syrups,setSyrups]     = useState([])  // [{ name, sf }]
-  const [exSel,setExSel]       = useState([])
   const [notes,setNotes]       = useState('')
   const [sent,setSent]         = useState(false)
-  const [showExtras,setShowExtras] = useState(false)
   const [showSyrups,setShowSyrups] = useState(false)
   const [pickup,setPickup]     = useState(true)
   const [deliverTo,setDeliverTo] = useState(() => {
@@ -696,8 +681,6 @@ function CoffeePage({ myGroup }) {
     return exists ? prev.filter(s => s.name !== sName) : [...prev, { name: sName, sf: false }]
   })
   const toggleSF = sName => setSyrups(prev => prev.map(s => s.name === sName ? { ...s, sf: !s.sf } : s))
-  const toggleEx = item => setExSel(p => p.includes(item) ? p.filter(x => x !== item) : [...p, item])
-
   const can = name.trim() && drink && (isSpecialtyCold || size) && (!syrupRequired || syrupCount > 0)
 
   const buildMsg = () => {
@@ -707,12 +690,11 @@ function CoffeePage({ myGroup }) {
     const syrupStr   = syrups.length
       ? `, ${syrups.map(s => s.sf ? `${s.name} SF` : s.name).join(' + ')} syrup`
       : ''
-    const extStr     = exSel.length ? ` + ${exSel.join(', ')}` : ''
     const noteStr    = notes.trim() ? ` — ${notes.trim()}` : ''
     const deliveryStr = pickup
       ? ' (pickup)'
       : deliverTo.trim() ? ` (deliver → ${deliverTo.trim()})` : ' (pickup)'
-    return `VBS Order from ${name.trim()}${deliveryStr}: ${drinkLabel}${sizeStr}${milkStr}${syrupStr}${extStr}${noteStr}`
+    return `VBS Order from ${name.trim()}${deliveryStr}: ${drinkLabel}${sizeStr}${milkStr}${syrupStr}${noteStr}`
   }
 
   const send = () => {
@@ -882,30 +864,6 @@ function CoffeePage({ myGroup }) {
               placeholder="Where? (e.g. Blue Group, Wild Games station, Stage…)"
               style={{ width:'100%',background:'transparent',border:'none',outline:'none',fontSize:14,color:C.text,fontFamily:'inherit',padding:0 }} />
           </SCard>
-        )}
-
-        {/* ── Extras ── */}
-        <Tap onClick={() => setShowExtras(p => !p)}
-          style={{ background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:20,marginBottom:showExtras?8:0 }}>
-          <span style={{ fontSize:14,fontWeight:500,color:C.text }}>
-            Extras{exSel.length > 0 ? ` · ${exSel.length} selected` : ''}
-            <span style={{ color:C.muted,fontSize:13 }}> (optional)</span>
-          </span>
-          <ChevronDown size={16} color={C.muted}
-            style={{ transform:showExtras?'rotate(180deg)':'rotate(0)',transition:'transform 0.2s ease',flexShrink:0 }} />
-        </Tap>
-        {showExtras && (
-          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:0 }}>
-            {EXTRAS.map(item => {
-              const on = exSel.includes(item)
-              return (
-                <Tap key={item} onClick={() => toggleEx(item)}
-                  style={{ background:on?C.accentBg:C.surface,border:`1.5px solid ${on?C.accent:C.border}`,borderRadius:10,padding:'10px 12px' }}>
-                  <p style={{ margin:0,fontSize:12,fontWeight:on?700:500,color:on?C.accent:C.muted }}>{item}</p>
-                </Tap>
-              )
-            })}
-          </div>
         )}
 
         {/* ── Notes ── */}
