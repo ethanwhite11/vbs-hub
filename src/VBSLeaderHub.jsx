@@ -9,7 +9,7 @@ const GCSS = `
   @keyframes fadeUp     { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   @keyframes livePulse  { 0%,100%{opacity:1} 50%{opacity:0.35} }
   * { -webkit-tap-highlight-color:transparent; box-sizing:border-box; }
-  body { overscroll-behavior:none; margin:0; background:#f5f5f5; }
+  body { overscroll-behavior:none; margin:0; background:#f5f5f5; font-family:'Plus Jakarta Sans',system-ui,sans-serif; }
   button { font-family:inherit; }
   ::-webkit-scrollbar { width:0; }
 `
@@ -38,6 +38,15 @@ const GROUPS = {
   purple: { color:'#9B5CF6', bg:'rgba(155,92,246,0.10)',  dark:'rgba(155,92,246,0.18)',  label:'Purple',             short:'Pur', delivery:'Purple Group' },
   orange: { color:'#F97316', bg:'rgba(249,115,22,0.10)',  dark:'rgba(249,115,22,0.18)',  label:'Orange · Preschool', short:'Pre', delivery:'Orange Group' },
   none:   { color:'#888888', bg:'rgba(136,136,136,0.10)', dark:'rgba(136,136,136,0.18)', label:'No Group',           short:'',    delivery:''             },
+}
+
+// ─── BUDDY IMAGES ─────────────────────────────────────────────────────────────
+const BUDDY_IMGS = {
+  1: '/Day1-Tango.png',
+  2: '/Day2-Seymour.png',
+  3: '/Day3-Dottie.png',
+  4: '/Day4-Tia.png',
+  5: '/Day5-Howie.png',
 }
 
 // ─── SCHEDULE DATA ────────────────────────────────────────────────────────────
@@ -292,17 +301,17 @@ function NowHero({ myGroup, live, onChangeGroup }) {
   const lightBase = { background:C.surface, padding:`${safePad} 20px 22px`, borderBottom:`1px solid ${C.border}` }
 
   const hasColorGroup = myGroup && myGroup !== 'none'
-  const WhiteBadge = () => !hasColorGroup ? null : (
+  const WhiteBadge = () => (
     <Tap onClick={onChangeGroup} style={{ background:'rgba(255,255,255,0.2)',borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
-      <div style={{ width:7,height:7,borderRadius:'50%',background:'rgba(255,255,255,0.9)' }} />
-      <span style={{ fontSize:11,fontWeight:700,color:'#fff' }}>{g.label.split(' ')[0]}</span>
+      {hasColorGroup && <div style={{ width:7,height:7,borderRadius:'50%',background:'rgba(255,255,255,0.9)' }} />}
+      <span style={{ fontSize:11,fontWeight:700,color:'#fff' }}>{hasColorGroup ? g.label.split(' ')[0] : 'Staff'}</span>
     </Tap>
   )
 
-  const ColorBadge = () => !hasColorGroup ? null : (
-    <Tap onClick={onChangeGroup} style={{ background:g.bg,border:`1px solid ${g.color}50`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
-      <div style={{ width:7,height:7,borderRadius:'50%',background:g.color }} />
-      <span style={{ fontSize:11,fontWeight:700,color:g.color }}>{g.label.split(' ')[0]}</span>
+  const ColorBadge = () => (
+    <Tap onClick={onChangeGroup} style={{ background:hasColorGroup?g.bg:'rgba(0,0,0,0.05)',border:`1px solid ${hasColorGroup?g.color+'50':C.border}`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
+      {hasColorGroup && <div style={{ width:7,height:7,borderRadius:'50%',background:g.color }} />}
+      <span style={{ fontSize:11,fontWeight:700,color:hasColorGroup?g.color:C.muted }}>{hasColorGroup ? g.label.split(' ')[0] : 'Staff'}</span>
     </Tap>
   )
 
@@ -401,6 +410,13 @@ function TeachingCard({ day }) {
   const C = useC()
   return (
     <div style={{ background:C.surface,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden',marginBottom:10 }}>
+      <div style={{ background:`${day.accentColor}14`,borderBottom:`1px solid ${C.border}`,padding:'14px 16px',display:'flex',alignItems:'center',gap:14 }}>
+        <img src={BUDDY_IMGS[day.n]} alt={day.buddy} style={{ width:72,height:72,objectFit:'contain',flexShrink:0 }} />
+        <div>
+          <p style={{ margin:'0 0 2px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted }}>Day {day.n} Buddy</p>
+          <p style={{ margin:0,fontSize:20,fontWeight:700,color:C.text,lineHeight:1.2 }}>{day.buddy}</p>
+        </div>
+      </div>
       <div style={{ padding:'16px 16px 14px',borderBottom:`1px solid ${C.border}` }}>
         <p style={{ margin:'0 0 8px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted }}>Day {day.n} · Bible Point</p>
         <p style={{ margin:'0 0 10px',fontSize:22,fontWeight:700,color:C.text,lineHeight:1.2 }}>{day.point}</p>
@@ -570,10 +586,10 @@ function SchedulePage({ myGroup, live, now, onChangeGroup }) {
       <div style={{ padding:'calc(22px + env(safe-area-inset-top,0px)) 16px 14px' }}>
         <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4 }}>
           <h2 style={{ margin:0,fontSize:28,fontWeight:700,color:C.text }}>Schedule</h2>
-          {g && myGroup !== 'none' && (
-            <Tap onClick={onChangeGroup} style={{ background:g.bg,border:`1px solid ${g.color}50`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:6 }}>
-              <div style={{ width:8,height:8,borderRadius:'50%',background:g.color }} />
-              <span style={{ fontSize:11,fontWeight:700,color:g.color }}>{g.label.split(' ')[0]}</span>
+          {myGroup && (
+            <Tap onClick={onChangeGroup} style={{ background:g&&myGroup!=='none'?g.bg:'rgba(0,0,0,0.05)',border:`1px solid ${g&&myGroup!=='none'?g.color+'50':C.border}`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:6 }}>
+              {g && myGroup !== 'none' && <div style={{ width:8,height:8,borderRadius:'50%',background:g.color }} />}
+              <span style={{ fontSize:11,fontWeight:700,color:g&&myGroup!=='none'?g.color:C.muted }}>{g&&myGroup!=='none'?g.label.split(' ')[0]:'Staff'}</span>
             </Tap>
           )}
         </div>
@@ -934,9 +950,14 @@ function CrewPage({ live }) {
       </div>
 
       <div style={{ padding:'0 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
-        <div style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:16,padding:'16px 18px',marginBottom:12 }}>
-          <p style={{ margin:'0 0 5px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.accent }}>Crew Icebreaker · Day {dayData.n}</p>
-          <p style={{ margin:0,fontSize:15,color:C.text,lineHeight:1.5,fontStyle:'italic' }}>"{dayData.icebreaker}"</p>
+        <div style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:16,overflow:'hidden',marginBottom:12 }}>
+          <div style={{ display:'flex',alignItems:'flex-end',gap:0 }}>
+            <img src={BUDDY_IMGS[dayData.n]} alt={dayData.buddy} style={{ width:88,height:88,objectFit:'contain',flexShrink:0,marginLeft:8 }} />
+            <div style={{ padding:'14px 16px 14px 10px',flex:1 }}>
+              <p style={{ margin:'0 0 4px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.accent }}>Crew Icebreaker · Day {dayData.n}</p>
+              <p style={{ margin:0,fontSize:14,color:C.text,lineHeight:1.5,fontStyle:'italic' }}>"{dayData.icebreaker}"</p>
+            </div>
+          </div>
         </div>
 
         <CrewKit />
@@ -981,8 +1002,7 @@ export default function VBSLeaderHub() {
 
   useEffect(() => {
     const s = document.createElement('style'); s.textContent = GCSS; document.head.appendChild(s)
-    const l = document.createElement('link'); l.rel='stylesheet'; l.href='https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap'; document.head.appendChild(l)
-    return () => { try{document.head.removeChild(s)}catch{} try{document.head.removeChild(l)}catch{} }
+    return () => { try{document.head.removeChild(s)}catch{} }
   },[])
 
   useEffect(() => { const t=setInterval(()=>setNow(new Date()),60000); return()=>clearInterval(t) },[])
