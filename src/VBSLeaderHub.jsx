@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext } from "react"
-import { Calendar, Coffee, Users, Home, ChevronDown, ChevronRight, RefreshCw } from "lucide-react"
+import { Calendar, Coffee, Users, Home, ChevronDown, ChevronRight, ChevronLeft, RefreshCw } from "lucide-react"
 
 // ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
 const GCSS = `
@@ -664,191 +664,239 @@ function SchedulePage({ myGroup, live, now, onChangeGroup }) {
 // ─── COFFEE PAGE ──────────────────────────────────────────────────────────────
 function CoffeePage({ myGroup }) {
   const C = useC()
-  const [name,setName]         = useState('')
-  const [cat,setCat]           = useState('hot')
-  const [drink,setDrink]       = useState('')
-  const [size,setSize]         = useState('')
-  const [milk,setMilk]         = useState('')
-  const [syrups,setSyrups]     = useState([])  // [{ name, sf }]
-  const [notes,setNotes]       = useState('')
-  const [sent,setSent]         = useState(false)
-  const [showSyrups,setShowSyrups] = useState(false)
+
+  // wizard state
+  const [step, setStep]       = useState(1)   // 1-5
+  const [cat,  setCat]        = useState('')   // 'hot' | 'iced' | 'cold'
+  const [drink,setDrink]      = useState('')
+  const [size, setSize]       = useState('')
+  const [milk, setMilk]       = useState('')
+  const [syrups,setSyrups]    = useState([])   // [{ name, sf }]
+  const [name, setName]       = useState('')
+  const [pickup,setPickup]    = useState(true)
+  const [deliverTo,setDeliverTo] = useState(() =>
+    (!myGroup || myGroup === 'none') ? '' : (GROUPS[myGroup]?.delivery || '')
+  )
   const [payMethod,setPayMethod] = useState('')  // 'tab' | 'counter'
-  const [pickup,setPickup]     = useState(true)
-  const [deliverTo,setDeliverTo] = useState(() => {
-    if (!myGroup || myGroup === 'none') return ''
-    return GROUPS[myGroup]?.delivery || ''
-  })
+  const [notes,setNotes]      = useState('')
+  const [sent, setSent]       = useState(false)
+  const [showSyrups,setShowSyrups] = useState(false)
 
-  const isSpecialtyCold = cat === 'cold'
-  const isIced          = cat === 'iced'
-  const needsSize       = cat !== 'cold'
-  const syrupRequired   = drink && SYRUP_REQUIRED.has(drink)
-  const showMilk        = cat !== 'cold' && drink && MILK_ELIGIBLE.has(drink)
-  const syrupCount      = syrups.length
-
-  const switchCat = key => { setCat(key); setDrink(''); setSize(''); setMilk(''); setSyrups([]); setShowSyrups(false) }
-  const pickDrink = item => { setDrink(item); setMilk(''); setSyrups([]); setShowSyrups(false) }
+  const isIced        = cat === 'iced'
+  const isCold        = cat === 'cold'
+  const needsSize     = cat !== 'cold'
+  const syrupRequired = SYRUP_REQUIRED.has(drink)
+  const showMilk      = !isCold && MILK_ELIGIBLE.has(drink)
+  const syrupCount    = syrups.length
+  const syrupPicked   = sName => syrups.find(s => s.name === sName)
 
   const toggleSyrup = sName => setSyrups(prev => {
     const exists = prev.find(s => s.name === sName)
-    return exists ? prev.filter(s => s.name !== sName) : [...prev, { name: sName, sf: false }]
+    return exists ? prev.filter(s => s.name !== sName) : [...prev, { name:sName, sf:false }]
   })
-  const toggleSF = sName => setSyrups(prev => prev.map(s => s.name === sName ? { ...s, sf: !s.sf } : s))
-  const can = name.trim() && drink && (isSpecialtyCold || size) && (!syrupRequired || syrupCount > 0) && payMethod
+  const toggleSF = sName => setSyrups(prev =>
+    prev.map(s => s.name === sName ? { ...s, sf: !s.sf } : s)
+  )
 
   const buildMsg = () => {
-    const drinkLabel = isIced ? `Iced ${drink}` : drink
-    const sizeStr    = needsSize ? ` (${size})` : ''
-    const milkStr    = milk ? `, ${milk}` : ''
-    const syrupStr   = syrups.length
+    const drinkLabel  = isIced ? `Iced ${drink}` : drink
+    const sizeStr     = needsSize ? ` (${size})` : ''
+    const milkStr     = milk ? `, ${milk}` : ''
+    const syrupStr    = syrups.length
       ? `, ${syrups.map(s => s.sf ? `${s.name} SF` : s.name).join(' + ')} syrup`
       : ''
-    const noteStr    = notes.trim() ? ` — ${notes.trim()}` : ''
+    const noteStr     = notes.trim() ? ` — ${notes.trim()}` : ''
     const deliveryStr = pickup
       ? ' (pickup)'
       : deliverTo.trim() ? ` (deliver → ${deliverTo.trim()})` : ' (pickup)'
-    const payStr = payMethod === 'tab' ? ' [on tab]' : ' [paying at pickup]'
+    const payStr      = payMethod === 'tab' ? ' [on tab]' : ' [paying at pickup]'
     return `VBS Order from ${name.trim()}${deliveryStr}${payStr}: ${drinkLabel}${sizeStr}${milkStr}${syrupStr}${noteStr}`
   }
 
   const send = () => {
-    if (!can) return
     window.location.href = `sms:${COFFEE_NUM}&body=${encodeURIComponent(buildMsg())}`
     setSent(true)
-    setTimeout(() => setSent(false), 4000)
+    setTimeout(() => setSent(false), 5000)
   }
 
-  const FL = ({ children, sub }) => (
-    <div style={{ margin:'20px 0 8px',display:'flex',alignItems:'baseline',gap:6 }}>
-      <p style={{ margin:0,fontSize:13,fontWeight:600,color:C.text }}>{children}</p>
-      {sub && <span style={{ fontSize:11,color:C.muted }}>{sub}</span>}
+  // ── shared header (steps 2-5) ──
+  const WizHeader = ({ breadcrumb, onBack }) => (
+    <div style={{ padding:'calc(14px + env(safe-area-inset-top,0px)) 16px 0', display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+      <Tap onClick={onBack} style={{ padding:'6px', marginLeft:-6, borderRadius:8 }}>
+        <ChevronLeft size={22} color={C.text} />
+      </Tap>
+      <div style={{ flex:1 }}>
+        <p style={{ margin:0, fontSize:12, color:C.muted }}>{breadcrumb}</p>
+      </div>
+      <div style={{ background:C.accentBg, border:`1px solid ${C.accentBdr}`, borderRadius:8, padding:'3px 10px' }}>
+        <span style={{ fontSize:12, fontWeight:700, color:C.accent }}>$2 · All drinks</span>
+      </div>
     </div>
   )
 
-  const syrupPicked = sName => syrups.find(s => s.name === sName)
+  // ── step progress dots ──
+  const StepDots = () => (
+    <div style={{ display:'flex', justifyContent:'center', gap:6, padding:'10px 0 18px' }}>
+      {[1,2,3,4,5].map(n => (
+        <div key={n} style={{
+          width: n === step ? 18 : 6, height:6, borderRadius:99,
+          background: n < step ? C.accent : n === step ? C.accent : C.border,
+          opacity: n < step ? 0.4 : 1,
+          transition:'all 0.3s ease'
+        }} />
+      ))}
+    </div>
+  )
 
-  return (
-    <div>
-      <div style={{ padding:'calc(22px + env(safe-area-inset-top,0px)) 16px 14px' }}>
-        <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between' }}>
-          <div>
-            <h2 style={{ margin:'0 0 2px',fontSize:28,fontWeight:700,color:C.text }}>Coffee</h2>
-            <p style={{ margin:0,fontSize:13,color:C.muted }}>The Café @ Gateway</p>
-          </div>
-          <div style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:10,padding:'5px 12px',flexShrink:0,marginTop:4 }}>
-            <span style={{ fontSize:13,fontWeight:700,color:C.accent }}>$2 · All drinks</span>
-          </div>
-        </div>
+  // ══════════════════════════════════════════════════════════════
+  // STEP 1 — Category
+  // ══════════════════════════════════════════════════════════════
+  if (step === 1) return (
+    <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column' }}>
+      <div style={{ padding:'calc(28px + env(safe-area-inset-top,0px)) 20px 8px' }}>
+        <p style={{ margin:'0 0 2px', fontSize:11, fontWeight:700, letterSpacing:'.09em', textTransform:'uppercase', color:C.accent }}>The Café @ Gateway</p>
+        <h2 style={{ margin:'0 0 4px', fontSize:30, fontWeight:700, color:C.text }}>Coffee</h2>
+        <p style={{ margin:0, fontSize:13, color:C.muted }}>What are you feeling?</p>
+        <StepDots />
       </div>
 
-      <div style={{ padding:'0 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
+      <div style={{ padding:'0 20px calc(100px + env(safe-area-inset-bottom,0px))', display:'flex', flexDirection:'column', gap:12 }}>
+        {Object.entries(MENU).map(([key, m]) => (
+          <Tap key={key} onClick={() => { setCat(key); setDrink(''); setSize(''); setMilk(''); setSyrups([]); setStep(2) }}
+            style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:16, padding:'20px 18px', display:'flex', alignItems:'center', gap:16 }}>
+            <span style={{ fontSize:36, lineHeight:1 }}>{m.emoji}</span>
+            <div style={{ flex:1 }}>
+              <p style={{ margin:'0 0 2px', fontSize:18, fontWeight:700, color:C.text }}>{m.label}</p>
+              <p style={{ margin:0, fontSize:12, color:C.muted }}>
+                {key==='hot' && 'Lattes, mochas, chai & more'}
+                {key==='iced' && 'Cold versions of our hot drinks'}
+                {key==='cold' && 'Italian sodas, smoothies & chills'}
+              </p>
+            </div>
+            <ChevronRight size={20} color={C.muted} />
+          </Tap>
+        ))}
 
-        {sent && (
-          <div style={{ background:C.greenBg,border:`1px solid ${C.accentBdr}`,borderRadius:12,padding:'12px 16px',marginBottom:12,animation:'fadeUp 0.3s ease both',display:'flex',alignItems:'center',gap:10 }}>
-            <span style={{ fontSize:18 }}>✅</span>
-            <p style={{ margin:0,fontSize:14,color:C.green,fontWeight:600 }}>Order sent! Open your texts and tap send.</p>
-          </div>
-        )}
+        <div style={{ background:C.accentBg, border:`1px solid ${C.accentBdr}`, borderRadius:12, padding:'10px 14px', marginTop:4 }}>
+          <p style={{ margin:0, fontSize:12, color:C.accent, fontWeight:600, textAlign:'center' }}>All drinks $2 · Cold drinks are 16 oz</p>
+        </div>
+      </div>
+    </div>
+  )
 
-        {/* ── Name ── */}
-        <FL>Your name</FL>
-        <SCard style={{ padding:'12px 14px' }}>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name..."
-            style={{ width:'100%',background:'transparent',border:'none',outline:'none',fontSize:16,color:C.text,fontFamily:'inherit',padding:0 }} />
-        </SCard>
-
-        {/* ── Temperature ── */}
-        <FL>Temperature</FL>
-        <div style={{ display:'flex',gap:8 }}>
-          {Object.entries(MENU).map(([key,m]) => (
-            <Tap key={key} onClick={() => switchCat(key)}
-              style={{ flex:1,padding:'12px 6px',borderRadius:12,border:`1.5px solid ${cat===key?C.accent:C.border}`,background:cat===key?C.accentBg:C.surface,textAlign:'center' }}>
-              <span style={{ fontSize:20,display:'block',marginBottom:3 }}>{m.emoji}</span>
-              <span style={{ fontSize:12,fontWeight:700,color:cat===key?C.accent:C.muted }}>{m.label}</span>
+  // ══════════════════════════════════════════════════════════════
+  // STEP 2 — Drink
+  // ══════════════════════════════════════════════════════════════
+  if (step === 2) return (
+    <div>
+      <WizHeader
+        breadcrumb={`${MENU[cat].emoji}  ${MENU[cat].label}`}
+        onBack={() => setStep(1)}
+      />
+      <div style={{ padding:'0 16px calc(100px + env(safe-area-inset-bottom,0px))' }}>
+        <h3 style={{ margin:'14px 0 4px', fontSize:22, fontWeight:700, color:C.text }}>Choose your drink</h3>
+        <p style={{ margin:'0 0 4px', fontSize:13, color:C.muted }}>
+          {isCold ? 'All 16 oz' : 'You\'ll pick a size next'}
+        </p>
+        <StepDots />
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+          {MENU[cat].items.map(item => (
+            <Tap key={item} onClick={() => { setDrink(item); setSize(''); setMilk(''); setSyrups([]); setShowSyrups(false); setStep(3) }}
+              style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:12, padding:'14px 13px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <p style={{ margin:0, fontSize:13, fontWeight:600, color:C.text, flex:1, lineHeight:1.3 }}>{item}</p>
+              <ChevronRight size={14} color={C.muted} style={{ flexShrink:0, marginLeft:4 }} />
             </Tap>
           ))}
         </div>
-        {isSpecialtyCold && <p style={{ margin:'6px 0 0',fontSize:11,color:C.muted }}>All cold drinks are 16 oz</p>}
+      </div>
+    </div>
+  )
 
-        {/* ── Drink ── */}
-        <FL>Choose your drink</FL>
-        <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:4 }}>
-          {MENU[cat].items.map(item => {
-            const on = drink === item
-            return (
-              <Tap key={item} onClick={() => pickDrink(item)}
-                style={{ background:on?C.accentBg:C.surface,border:`1.5px solid ${on?C.accent:C.border}`,borderRadius:10,padding:'11px 12px',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-                <p style={{ margin:0,fontSize:13,fontWeight:on?700:500,color:on?C.accent:C.text,flex:1 }}>{item}</p>
-                {on && <div style={{ width:7,height:7,borderRadius:'50%',background:C.accent,flexShrink:0,marginLeft:6 }} />}
-              </Tap>
-            )
-          })}
-        </div>
+  // ══════════════════════════════════════════════════════════════
+  // STEP 3 — Customize
+  // ══════════════════════════════════════════════════════════════
+  const canCustomize = (!needsSize || size) && (!syrupRequired || syrupCount > 0)
 
-        {/* ── Size (hot + iced) ── */}
-        {needsSize && drink && (
-          <>
-            <FL>Size</FL>
-            <div style={{ display:'flex',gap:8,marginBottom:4 }}>
-              {SIZES.map(s => (
-                <Tap key={s} onClick={() => setSize(s)}
-                  style={{ flex:1,padding:'10px',borderRadius:10,border:`1.5px solid ${size===s?C.accent:C.border}`,background:size===s?C.accentBg:C.surface,textAlign:'center' }}>
-                  <span style={{ fontSize:14,fontWeight:700,color:size===s?C.accent:C.muted }}>{s}</span>
-                </Tap>
-              ))}
-            </div>
-          </>
-        )}
+  if (step === 3) {
+    const FL3 = ({ children, sub }) => (
+      <div style={{ margin:'20px 0 8px', display:'flex', alignItems:'baseline', gap:6 }}>
+        <p style={{ margin:0, fontSize:13, fontWeight:700, color:C.text }}>{children}</p>
+        {sub && <span style={{ fontSize:11, color:C.muted }}>{sub}</span>}
+      </div>
+    )
+    return (
+      <div>
+        <WizHeader
+          breadcrumb={`${MENU[cat].emoji}  ${MENU[cat].label}  ›  ${isIced ? 'Iced ' : ''}${drink}`}
+          onBack={() => setStep(2)}
+        />
+        <div style={{ padding:'0 16px calc(100px + env(safe-area-inset-bottom,0px))' }}>
+          <h3 style={{ margin:'14px 0 2px', fontSize:22, fontWeight:700, color:C.text }}>{isIced ? `Iced ${drink}` : drink}</h3>
+          <p style={{ margin:'0 0 4px', fontSize:13, color:C.muted }}>Customize your order</p>
+          <StepDots />
 
-        {/* ── Milk alternative ── */}
-        {showMilk && (
-          <>
-            <FL sub="(optional)">Milk alternative</FL>
-            <div style={{ display:'flex',gap:8,marginBottom:4 }}>
-              {MILKS.map(m => (
-                <Tap key={m} onClick={() => setMilk(milk === m ? '' : m)}
-                  style={{ flex:1,padding:'10px',borderRadius:10,border:`1.5px solid ${milk===m?C.accent:C.border}`,background:milk===m?C.accentBg:C.surface,textAlign:'center' }}>
-                  <span style={{ fontSize:13,fontWeight:700,color:milk===m?C.accent:C.muted }}>{m}</span>
-                </Tap>
-              ))}
-            </div>
-          </>
-        )}
+          {/* Size */}
+          {needsSize && (
+            <>
+              <FL3>Size</FL3>
+              <div style={{ display:'flex', gap:8 }}>
+                {SIZES.map(s => (
+                  <Tap key={s} onClick={() => setSize(s)}
+                    style={{ flex:1, padding:'12px 6px', borderRadius:10, border:`1.5px solid ${size===s?C.accent:C.border}`, background:size===s?C.accentBg:C.surface, textAlign:'center' }}>
+                    <span style={{ fontSize:14, fontWeight:700, color:size===s?C.accent:C.muted }}>{s}</span>
+                  </Tap>
+                ))}
+              </div>
+            </>
+          )}
 
-        {/* ── Syrups ── */}
-        {drink && (
+          {/* Milk */}
+          {showMilk && (
+            <>
+              <FL3 sub="(optional)">Milk alternative</FL3>
+              <div style={{ display:'flex', gap:8 }}>
+                {MILKS.map(m => (
+                  <Tap key={m} onClick={() => setMilk(milk === m ? '' : m)}
+                    style={{ flex:1, padding:'12px 6px', borderRadius:10, border:`1.5px solid ${milk===m?C.accent:C.border}`, background:milk===m?C.accentBg:C.surface, textAlign:'center' }}>
+                    <span style={{ fontSize:13, fontWeight:700, color:milk===m?C.accent:C.muted }}>{m}</span>
+                  </Tap>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Syrups */}
           <>
             <Tap onClick={() => setShowSyrups(p => !p)}
-              style={{ background:C.surface,border:`1.5px solid ${syrupCount>0?C.accent:C.border}`,borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:20,marginBottom:showSyrups?8:0 }}>
+              style={{ background:C.surface, border:`1.5px solid ${syrupCount>0?C.accent:C.border}`, borderRadius:12, padding:'13px 14px', display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:20, marginBottom:showSyrups?8:0 }}>
               <div>
-                <span style={{ fontSize:14,fontWeight:600,color:syrupCount>0?C.accent:C.text }}>
+                <span style={{ fontSize:14, fontWeight:600, color:syrupCount>0?C.accent:C.text }}>
                   {syrupCount > 0 ? `Syrup · ${syrups.map(s => s.sf ? `${s.name} SF` : s.name).join(', ')}` : 'Syrup'}
                 </span>
                 {syrupRequired && syrupCount === 0
-                  ? <span style={{ fontSize:11,color:'#E05252',marginLeft:6 }}>required for Italian Soda</span>
-                  : <span style={{ fontSize:11,color:C.muted,marginLeft:6 }}>(optional)</span>
+                  ? <span style={{ fontSize:11, color:'#E05252', marginLeft:6 }}>required</span>
+                  : <span style={{ fontSize:11, color:C.muted, marginLeft:6 }}>(optional)</span>
                 }
               </div>
               <ChevronDown size={16} color={syrupCount>0?C.accent:C.muted}
-                style={{ transform:showSyrups?'rotate(180deg)':'rotate(0)',transition:'transform 0.2s ease',flexShrink:0 }} />
+                style={{ transform:showSyrups?'rotate(180deg)':'none', transition:'transform 0.2s ease', flexShrink:0 }} />
             </Tap>
 
             {showSyrups && (
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8 }}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginBottom:8 }}>
                 {SYRUPS.map(({ name:sName, sf:hasSF }) => {
                   const picked = syrupPicked(sName)
                   return (
                     <div key={sName}>
                       <Tap onClick={() => toggleSyrup(sName)}
-                        style={{ background:picked?C.accentBg:C.surface,border:`1.5px solid ${picked?C.accent:C.border}`,borderRadius:10,padding:'9px 12px',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-                        <span style={{ fontSize:13,fontWeight:picked?700:500,color:picked?C.accent:C.text }}>{sName}</span>
-                        {picked && <div style={{ width:6,height:6,borderRadius:'50%',background:C.accent,flexShrink:0 }} />}
+                        style={{ background:picked?C.accentBg:C.surface, border:`1.5px solid ${picked?C.accent:C.border}`, borderRadius:10, padding:'9px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                        <span style={{ fontSize:13, fontWeight:picked?700:500, color:picked?C.accent:C.text }}>{sName}</span>
+                        {picked && <div style={{ width:6, height:6, borderRadius:'50%', background:C.accent, flexShrink:0 }} />}
                       </Tap>
                       {picked && hasSF && (
                         <Tap onClick={() => toggleSF(sName)}
-                          style={{ marginTop:3,background:picked.sf?'rgba(22,163,74,0.15)':C.surfaceHi,border:`1px solid ${picked.sf?C.accent:C.border}`,borderRadius:7,padding:'4px 10px',textAlign:'center' }}>
-                          <span style={{ fontSize:11,fontWeight:700,color:picked.sf?C.accent:C.muted }}>
+                          style={{ marginTop:3, background:picked.sf?'rgba(22,163,74,0.15)':C.surfaceHi, border:`1px solid ${picked.sf?C.accent:C.border}`, borderRadius:7, padding:'4px 10px', textAlign:'center' }}>
+                          <span style={{ fontSize:11, fontWeight:700, color:picked.sf?C.accent:C.muted }}>
                             {picked.sf ? '✓ Sugar Free' : 'Sugar Free?'}
                           </span>
                         </Tap>
@@ -859,75 +907,177 @@ function CoffeePage({ myGroup }) {
               </div>
             )}
           </>
-        )}
 
-        {/* ── Pickup or delivery ── */}
-        <FL>Pickup or delivery?</FL>
-        <div style={{ display:'flex',gap:8 }}>
-          <Tap onClick={() => { setPickup(true); setPayMethod('') }}
-            style={{ flex:1,padding:'11px',borderRadius:10,border:`1.5px solid ${pickup?C.accent:C.border}`,background:pickup?C.accentBg:C.surface,textAlign:'center' }}>
-            <span style={{ fontSize:13,fontWeight:700,color:pickup?C.accent:C.muted }}>I'll pick it up</span>
-          </Tap>
-          <Tap onClick={() => { setPickup(false); setPayMethod('tab') }}
-            style={{ flex:1,padding:'11px',borderRadius:10,border:`1.5px solid ${!pickup?C.accent:C.border}`,background:!pickup?C.accentBg:C.surface,textAlign:'center' }}>
-            <span style={{ fontSize:13,fontWeight:700,color:!pickup?C.accent:C.muted }}>Deliver it</span>
+          <Tap onClick={() => canCustomize && setStep(4)} disabled={!canCustomize}
+            style={{ marginTop:24, padding:'15px', borderRadius:14, textAlign:'center', background:canCustomize?C.accent:C.surfaceHi, border:canCustomize?'none':`1px solid ${C.border}` }}>
+            <span style={{ fontSize:15, fontWeight:700, color:canCustomize?'#fff':C.muted }}>
+              {syrupRequired && syrupCount===0 ? 'Pick a syrup to continue' : !size && needsSize ? 'Pick a size to continue' : 'Continue →'}
+            </span>
           </Tap>
         </div>
+      </div>
+    )
+  }
 
-        {/* ── Payment method (pickup only) ── */}
-        {pickup && (
-          <>
-            <FL>How are you paying?</FL>
-            <div style={{ display:'flex',gap:8 }}>
-              <Tap onClick={() => setPayMethod('tab')}
-                style={{ flex:1,padding:'11px 8px',borderRadius:10,border:`1.5px solid ${payMethod==='tab'?C.accent:C.border}`,background:payMethod==='tab'?C.accentBg:C.surface,textAlign:'center' }}>
-                <span style={{ fontSize:13,fontWeight:700,color:payMethod==='tab'?C.accent:C.muted }}>I'm on the tab</span>
-              </Tap>
-              <Tap onClick={() => setPayMethod('counter')}
-                style={{ flex:1,padding:'11px 8px',borderRadius:10,border:`1.5px solid ${payMethod==='counter'?C.accent:C.border}`,background:payMethod==='counter'?C.accentBg:C.surface,textAlign:'center' }}>
-                <span style={{ fontSize:13,fontWeight:700,color:payMethod==='counter'?C.accent:C.muted }}>Pay at counter</span>
-              </Tap>
-            </div>
-            {payMethod === 'tab' && (
-              <p style={{ margin:'6px 0 0',fontSize:11,color:C.muted }}>Carolyn will deduct this from your tab balance</p>
-            )}
-            {payMethod === 'counter' && (
-              <p style={{ margin:'6px 0 0',fontSize:11,color:C.muted }}>Cash or card — pay when you pick up your order</p>
-            )}
-          </>
-        )}
-        {!pickup && (
-          <SCard style={{ padding:'12px 14px',marginTop:8 }}>
-            <input value={deliverTo} onChange={e => setDeliverTo(e.target.value)}
-              placeholder="Where? (e.g. Blue Group, Wild Games station, Stage…)"
-              style={{ width:'100%',background:'transparent',border:'none',outline:'none',fontSize:14,color:C.text,fontFamily:'inherit',padding:0 }} />
+  // ══════════════════════════════════════════════════════════════
+  // STEP 4 — Details (name, pickup, payment)
+  // ══════════════════════════════════════════════════════════════
+  const canDetails = name.trim() && payMethod
+
+  if (step === 4) {
+    const FL4 = ({ children, sub }) => (
+      <div style={{ margin:'20px 0 8px', display:'flex', alignItems:'baseline', gap:6 }}>
+        <p style={{ margin:0, fontSize:13, fontWeight:700, color:C.text }}>{children}</p>
+        {sub && <span style={{ fontSize:11, color:C.muted }}>{sub}</span>}
+      </div>
+    )
+    return (
+      <div>
+        <WizHeader
+          breadcrumb={`${MENU[cat].emoji}  ${isIced ? 'Iced ' : ''}${drink}${size ? ` · ${size}` : ''}`}
+          onBack={() => setStep(3)}
+        />
+        <div style={{ padding:'0 16px calc(100px + env(safe-area-inset-bottom,0px))' }}>
+          <h3 style={{ margin:'14px 0 2px', fontSize:22, fontWeight:700, color:C.text }}>Your details</h3>
+          <p style={{ margin:'0 0 4px', fontSize:13, color:C.muted }}>Almost done — just a few logistics</p>
+          <StepDots />
+
+          {/* Name */}
+          <FL4>Your name</FL4>
+          <SCard style={{ padding:'12px 14px' }}>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name..."
+              style={{ width:'100%', background:'transparent', border:'none', outline:'none', fontSize:16, color:C.text, fontFamily:'inherit', padding:0 }} />
           </SCard>
-        )}
 
-        {/* ── Notes ── */}
-        <FL sub="(optional)">Notes</FL>
-        <SCard style={{ padding:'12px 14px',marginBottom:0 }}>
-          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any other requests..."
-            style={{ width:'100%',background:'transparent',border:'none',outline:'none',fontSize:14,color:C.text,fontFamily:'inherit',resize:'none',minHeight:48,padding:0 }} />
-        </SCard>
+          {/* Pickup or delivery */}
+          <FL4>Pickup or delivery?</FL4>
+          <div style={{ display:'flex', gap:8 }}>
+            <Tap onClick={() => { setPickup(true); setPayMethod('') }}
+              style={{ flex:1, padding:'12px', borderRadius:10, border:`1.5px solid ${pickup?C.accent:C.border}`, background:pickup?C.accentBg:C.surface, textAlign:'center' }}>
+              <span style={{ fontSize:13, fontWeight:700, color:pickup?C.accent:C.muted }}>I'll pick it up</span>
+            </Tap>
+            <Tap onClick={() => { setPickup(false); setPayMethod('tab') }}
+              style={{ flex:1, padding:'12px', borderRadius:10, border:`1.5px solid ${!pickup?C.accent:C.border}`, background:!pickup?C.accentBg:C.surface, textAlign:'center' }}>
+              <span style={{ fontSize:13, fontWeight:700, color:!pickup?C.accent:C.muted }}>Deliver it</span>
+            </Tap>
+          </div>
 
-        {/* ── Order preview ── */}
-        {can && (
-          <div style={{ background:C.surfaceHi,border:`1px solid ${C.border}`,borderRadius:12,padding:'12px 14px',marginTop:16,animation:'fadeUp 0.2s ease both' }}>
-            <p style={{ margin:'0 0 4px',fontSize:10,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:C.muted }}>Order preview</p>
-            <p style={{ margin:0,fontSize:13,color:C.text,lineHeight:1.5 }}>{buildMsg()}</p>
+          {!pickup && (
+            <SCard style={{ padding:'12px 14px', marginTop:8 }}>
+              <input value={deliverTo} onChange={e => setDeliverTo(e.target.value)}
+                placeholder="Where? (e.g. Blue Group, Wild Games…)"
+                style={{ width:'100%', background:'transparent', border:'none', outline:'none', fontSize:14, color:C.text, fontFamily:'inherit', padding:0 }} />
+            </SCard>
+          )}
+
+          {/* Payment */}
+          {pickup && (
+            <>
+              <FL4>How are you paying?</FL4>
+              <div style={{ display:'flex', gap:8 }}>
+                <Tap onClick={() => setPayMethod('tab')}
+                  style={{ flex:1, padding:'12px 8px', borderRadius:10, border:`1.5px solid ${payMethod==='tab'?C.accent:C.border}`, background:payMethod==='tab'?C.accentBg:C.surface, textAlign:'center' }}>
+                  <span style={{ fontSize:13, fontWeight:700, color:payMethod==='tab'?C.accent:C.muted }}>I'm on the tab</span>
+                </Tap>
+                <Tap onClick={() => setPayMethod('counter')}
+                  style={{ flex:1, padding:'12px 8px', borderRadius:10, border:`1.5px solid ${payMethod==='counter'?C.accent:C.border}`, background:payMethod==='counter'?C.accentBg:C.surface, textAlign:'center' }}>
+                  <span style={{ fontSize:13, fontWeight:700, color:payMethod==='counter'?C.accent:C.muted }}>Pay at counter</span>
+                </Tap>
+              </div>
+              {payMethod === 'tab' && <p style={{ margin:'6px 0 0', fontSize:11, color:C.muted }}>Carolyn will deduct this from your tab balance</p>}
+              {payMethod === 'counter' && <p style={{ margin:'6px 0 0', fontSize:11, color:C.muted }}>Cash or card — pay when you pick up</p>}
+            </>
+          )}
+
+          <Tap onClick={() => canDetails && setStep(5)} disabled={!canDetails}
+            style={{ marginTop:24, padding:'15px', borderRadius:14, textAlign:'center', background:canDetails?C.accent:C.surfaceHi, border:canDetails?'none':`1px solid ${C.border}` }}>
+            <span style={{ fontSize:15, fontWeight:700, color:canDetails?'#fff':C.muted }}>
+              {!name.trim() ? 'Enter your name to continue' : !payMethod ? 'Choose a payment method' : 'Review order →'}
+            </span>
+          </Tap>
+        </div>
+      </div>
+    )
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // STEP 5 — Confirm + Send
+  // ══════════════════════════════════════════════════════════════
+  return (
+    <div>
+      <WizHeader
+        breadcrumb={`${MENU[cat].emoji}  ${isIced ? 'Iced ' : ''}${drink}${size ? ` · ${size}` : ''}`}
+        onBack={() => setStep(4)}
+      />
+      <div style={{ padding:'0 16px calc(100px + env(safe-area-inset-bottom,0px))' }}>
+        <h3 style={{ margin:'14px 0 2px', fontSize:22, fontWeight:700, color:C.text }}>Confirm your order</h3>
+        <p style={{ margin:'0 0 4px', fontSize:13, color:C.muted }}>Looks good? Hit send below.</p>
+        <StepDots />
+
+        {sent && (
+          <div style={{ background:C.greenBg, border:`1px solid ${C.accentBdr}`, borderRadius:12, padding:'12px 16px', marginBottom:12, animation:'fadeUp 0.3s ease both', display:'flex', alignItems:'center', gap:10 }}>
+            <span style={{ fontSize:18 }}>✅</span>
+            <p style={{ margin:0, fontSize:14, color:C.green, fontWeight:600 }}>Order sent! Open your texts and tap send.</p>
           </div>
         )}
 
-        {/* ── Send ── */}
-        <Tap onClick={send} disabled={!can}
-          style={{ padding:'15px',borderRadius:14,textAlign:'center',background:can?C.accent:C.surfaceHi,border:can?'none':`1px solid ${C.border}`,marginTop:16 }}>
-          <span style={{ fontSize:15,fontWeight:700,color:can?'#fff':C.muted }}>
-            {can ? '☕  Send Order via Text' : syrupRequired && syrupCount===0 ? 'Pick a syrup flavor first' : !payMethod && name.trim() && drink ? 'Choose a payment method first' : 'Fill in name, drink & size first'}
-          </span>
-        </Tap>
-        <p style={{ textAlign:'center',fontSize:11,color:C.muted,marginTop:8,marginBottom:0 }}>Opens your texting app — just hit send</p>
+        {/* Order summary card */}
+        <div style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:16, overflow:'hidden', marginBottom:16 }}>
+          <div style={{ background:C.accentBg, padding:'12px 16px', borderBottom:`1px solid ${C.accentBdr}` }}>
+            <p style={{ margin:0, fontSize:11, fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase', color:C.accent }}>Your order</p>
+          </div>
+          <div style={{ padding:'14px 16px', display:'flex', flexDirection:'column', gap:10 }}>
+            {/* Drink row */}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+              <div>
+                <p style={{ margin:'0 0 2px', fontSize:16, fontWeight:700, color:C.text }}>{isIced ? `Iced ${drink}` : drink}</p>
+                {size && <p style={{ margin:0, fontSize:13, color:C.muted }}>{size}</p>}
+              </div>
+              <span style={{ fontSize:13, fontWeight:700, color:C.accent }}>$2</span>
+            </div>
+            {/* Add-ons */}
+            {(milk || syrups.length > 0) && (
+              <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:8 }}>
+                {milk && <p style={{ margin:'0 0 3px', fontSize:13, color:C.muted }}>+ {milk}</p>}
+                {syrups.map(s => (
+                  <p key={s.name} style={{ margin:'0 0 3px', fontSize:13, color:C.muted }}>
+                    + {s.name}{s.sf ? ' (SF)' : ''} syrup
+                  </p>
+                ))}
+              </div>
+            )}
+            {/* Delivery / payment */}
+            <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:8, display:'flex', gap:6, flexWrap:'wrap' }}>
+              <span style={{ fontSize:12, fontWeight:600, color:C.muted, background:C.surfaceHi, borderRadius:6, padding:'3px 8px' }}>
+                {pickup ? 'Pickup' : `Deliver → ${deliverTo || '?'}`}
+              </span>
+              <span style={{ fontSize:12, fontWeight:600, color:C.muted, background:C.surfaceHi, borderRadius:6, padding:'3px 8px' }}>
+                {payMethod === 'tab' ? 'On tab' : 'Pay at counter'}
+              </span>
+              <span style={{ fontSize:12, fontWeight:600, color:C.muted, background:C.surfaceHi, borderRadius:6, padding:'3px 8px' }}>
+                {name}
+              </span>
+            </div>
+          </div>
+        </div>
 
+        {/* Optional notes */}
+        <p style={{ margin:'0 0 6px', fontSize:13, fontWeight:700, color:C.text }}>Notes <span style={{ fontSize:11, fontWeight:400, color:C.muted }}>(optional)</span></p>
+        <SCard style={{ padding:'12px 14px', marginBottom:0 }}>
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Any other requests..."
+            style={{ width:'100%', background:'transparent', border:'none', outline:'none', fontSize:14, color:C.text, fontFamily:'inherit', resize:'none', minHeight:48, padding:0 }} />
+        </SCard>
+
+        <Tap onClick={send}
+          style={{ marginTop:16, padding:'16px', borderRadius:14, textAlign:'center', background:C.accent }}>
+          <span style={{ fontSize:15, fontWeight:700, color:'#fff' }}>☕  Send Order via Text</span>
+        </Tap>
+        <p style={{ textAlign:'center', fontSize:11, color:C.muted, marginTop:8, marginBottom:0 }}>Opens your texting app — just hit send</p>
+
+        <Tap onClick={() => { setStep(1); setCat(''); setDrink(''); setSize(''); setMilk(''); setSyrups([]); setName(''); setPayMethod(''); setNotes(''); setSent(false) }}
+          style={{ marginTop:12, padding:'10px', borderRadius:10, textAlign:'center' }}>
+          <span style={{ fontSize:13, color:C.muted }}>Start a new order</span>
+        </Tap>
       </div>
     </div>
   )
