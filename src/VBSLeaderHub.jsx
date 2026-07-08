@@ -255,77 +255,109 @@ function GroupModal({ myGroup, onSelect, onClose }) {
   )
 }
 
-// ─── NOW HERO ─────────────────────────────────────────────────────────────────
-function NowHero({ myGroup, live }) {
+// ─── NOW HERO — full-bleed T1, handles safe-area, owns the group badge ────────
+function NowHero({ myGroup, live, onChangeGroup }) {
   const C = useC()
   const g = myGroup ? GROUPS[myGroup] : null
+  const safePad = 'calc(22px + env(safe-area-inset-top,0px))'
+  const greenBase = { background:C.accent, padding:`${safePad} 20px 26px`, borderRadius:'0 0 24px 24px' }
+  const lightBase = { background:C.surface, padding:`${safePad} 20px 22px`, borderBottom:`1px solid ${C.border}` }
 
-  const cardBase = { background:C.surface, borderRadius:16, border:`1px solid ${C.border}`, padding:'18px 20px' }
+  const WhiteBadge = () => !g ? null : (
+    <Tap onClick={onChangeGroup} style={{ background:'rgba(255,255,255,0.2)',borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
+      <div style={{ width:7,height:7,borderRadius:'50%',background:'rgba(255,255,255,0.9)' }} />
+      <span style={{ fontSize:11,fontWeight:700,color:'#fff' }}>{g.label.split(' ')[0]}</span>
+    </Tap>
+  )
+
+  const ColorBadge = () => !g ? null : (
+    <Tap onClick={onChangeGroup} style={{ background:g.bg,border:`1px solid ${g.color}50`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
+      <div style={{ width:7,height:7,borderRadius:'50%',background:g.color }} />
+      <span style={{ fontSize:11,fontWeight:700,color:g.color }}>{g.label.split(' ')[0]}</span>
+    </Tap>
+  )
 
   if (live.status === 'countdown') return (
-    <div style={cardBase}>
-      <p style={{ margin:'0 0 4px',fontSize:12,fontWeight:600,color:C.muted }}>VBS Status</p>
-      <p style={{ margin:0,fontSize:20,fontWeight:700,color:C.text }}>July 13–17 · Coming Soon 🌿</p>
+    <div style={greenBase}>
+      <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20 }}>
+        <div>
+          <p style={{ margin:0,fontSize:10,fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(255,255,255,0.65)' }}>Gateway Church · VBS 2026</p>
+          <p style={{ margin:'3px 0 0',fontSize:17,fontWeight:700,color:'rgba(255,255,255,0.95)' }}>Rainforest Falls</p>
+        </div>
+        <WhiteBadge />
+      </div>
+      <p style={{ margin:0,fontSize:38,fontWeight:800,color:'#fff',lineHeight:1.1 }}>July 13–17 🌿</p>
+      <p style={{ margin:'8px 0 0',fontSize:15,color:'rgba(255,255,255,0.78)' }}>Coming soon · 9:00 AM – 12:00 PM</p>
     </div>
   )
 
   if (live.status === 'done') return (
-    <div style={cardBase}>
-      <p style={{ margin:0,fontSize:18,fontWeight:600,color:C.muted }}>VBS 2026 complete. See you next year 🌿</p>
+    <div style={lightBase}>
+      <p style={{ margin:'0 0 6px',fontSize:11,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:'.06em' }}>Rainforest Falls · VBS 2026</p>
+      <p style={{ margin:0,fontSize:26,fontWeight:700,color:C.muted }}>VBS 2026 complete. See you next year 🌿</p>
     </div>
   )
 
   if (live.status === 'before') return (
-    <div style={cardBase}>
-      <div style={{ display:'flex',alignItems:'center',gap:6,marginBottom:8 }}>
-        <div style={{ width:6,height:6,borderRadius:'50%',background:C.green,animation:'livePulse 2s ease infinite' }} />
-        <span style={{ fontSize:10,fontWeight:700,color:C.green,letterSpacing:'.08em',textTransform:'uppercase' }}>
-          Today · {live.dayIdx>=0 ? DAYS[live.dayIdx].label : ''}
-        </span>
+    <div style={greenBase}>
+      <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20 }}>
+        <p style={{ margin:0,fontSize:11,fontWeight:700,letterSpacing:'.08em',textTransform:'uppercase',color:'rgba(255,255,255,0.7)' }}>
+          {live.dayIdx >= 0 ? DAYS[live.dayIdx].label : ''} · VBS 2026
+        </p>
+        <WhiteBadge />
       </div>
-      <p style={{ margin:0,fontSize:20,fontWeight:700,color:C.text }}>Program starts in {live.minUntil} min</p>
+      <p style={{ margin:'0 0 4px',fontSize:15,color:'rgba(255,255,255,0.75)' }}>Program starts in</p>
+      <p style={{ margin:0,fontSize:52,fontWeight:800,color:'#fff',lineHeight:1 }}>
+        {live.minUntil}<span style={{ fontSize:22,fontWeight:600 }}> min</span>
+      </p>
     </div>
   )
 
   if (live.status === 'after') return (
-    <div style={cardBase}>
-      <p style={{ margin:'0 0 4px',fontSize:11,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:'.06em' }}>
-        {live.dayIdx>=0 ? DAYS[live.dayIdx].label : ''}
-      </p>
-      <p style={{ margin:0,fontSize:20,fontWeight:600,color:C.muted }}>Program wrapped for today</p>
+    <div style={lightBase}>
+      <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10 }}>
+        <p style={{ margin:0,fontSize:11,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:'.06em' }}>
+          {live.dayIdx >= 0 ? DAYS[live.dayIdx].label : ''}
+        </p>
+        <ColorBadge />
+      </div>
+      <p style={{ margin:0,fontSize:28,fontWeight:700,color:C.muted }}>Wrapped for today</p>
     </div>
   )
 
+  // Live state
   const { slot, slotIdx, minLeft, progress, next } = live
   const myAct = myGroup ? getActivity(myGroup, slotIdx) : null
   const nextIdx = next ? SLOTS.indexOf(next) : -1
-  const nextAct = myGroup && nextIdx>=0 ? getActivity(myGroup, nextIdx) : null
+  const nextAct = myGroup && nextIdx >= 0 ? getActivity(myGroup, nextIdx) : null
   const nextLabel = next ? (next.allGroups ? next.label : nextAct?.s || 'Station Rotation') : null
 
   return (
-    <div style={{ background:C.accent, borderRadius:16, padding:'16px 18px' }}>
-      <div style={{ display:'flex',alignItems:'center',gap:6,marginBottom:10 }}>
-        <div style={{ width:6,height:6,borderRadius:'50%',background:'rgba(255,255,255,0.8)',animation:'livePulse 2s ease infinite' }} />
-        <span style={{ fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.8)',letterSpacing:'.08em',textTransform:'uppercase' }}>
-          Live Now · {DAYS[live.dayIdx].label}
-        </span>
-        {g && <span style={{ marginLeft:'auto',fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.7)',background:'rgba(255,255,255,0.15)',borderRadius:20,padding:'2px 8px' }}>{g.label.split(' ')[0]}</span>}
+    <div style={greenBase}>
+      <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:16 }}>
+        <div style={{ display:'flex',alignItems:'center',gap:6 }}>
+          <div style={{ width:6,height:6,borderRadius:'50%',background:'rgba(255,255,255,0.85)',animation:'livePulse 2s ease infinite' }} />
+          <span style={{ fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.8)',letterSpacing:'.08em',textTransform:'uppercase' }}>
+            Live Now · {DAYS[live.dayIdx].label}
+          </span>
+        </div>
+        <WhiteBadge />
       </div>
       {myAct ? (
         <>
-          <p style={{ margin:'0 0 4px',fontSize:26,fontWeight:800,color:'#fff',lineHeight:1.1 }}>{myAct.s}</p>
-          <p style={{ margin:'0 0 14px',fontSize:13,color:'rgba(255,255,255,0.8)' }}>📍 {myAct.l}</p>
+          <p style={{ margin:'0 0 4px',fontSize:34,fontWeight:800,color:'#fff',lineHeight:1.1 }}>{myAct.s}</p>
+          <p style={{ margin:'0 0 18px',fontSize:13,color:'rgba(255,255,255,0.82)' }}>📍 {myAct.l}</p>
           <div style={{ height:3,background:'rgba(255,255,255,0.25)',borderRadius:99,overflow:'hidden',marginBottom:8 }}>
             <div style={{ height:'100%',width:`${Math.min(100,Math.max(0,progress*100))}%`,background:'#fff',borderRadius:99,transition:'width 30s linear' }} />
           </div>
           <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-            <span style={{ fontSize:12,color:'rgba(255,255,255,0.85)',fontWeight:600 }}>{minLeft} min left</span>
+            <span style={{ fontSize:13,color:'rgba(255,255,255,0.9)',fontWeight:700 }}>{minLeft} min left</span>
             {next && <span style={{ fontSize:11,color:'rgba(255,255,255,0.65)' }}>Next: {nextLabel} · {fmtTime(next.start)}</span>}
           </div>
         </>
       ) : (
         <>
-          <p style={{ margin:'0 0 4px',fontSize:22,fontWeight:700,color:'#fff' }}>
+          <p style={{ margin:'0 0 4px',fontSize:28,fontWeight:700,color:'#fff' }}>
             {slot.allGroups ? slot.label : 'Station Rotation'}
           </p>
           {slot.allGroups && <p style={{ margin:0,fontSize:13,color:'rgba(255,255,255,0.8)' }}>📍 {slot.location} · All Groups</p>}
@@ -335,8 +367,100 @@ function NowHero({ myGroup, live }) {
   )
 }
 
+// ─── TEACHING CARD — merges Bible Point, Memory Verse, Icebreaker ─────────────
+function TeachingCard({ day }) {
+  const C = useC()
+  return (
+    <div style={{ background:C.surface,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden',marginBottom:10 }}>
+      <div style={{ padding:'16px 16px 14px',borderBottom:`1px solid ${C.border}` }}>
+        <p style={{ margin:'0 0 8px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted }}>Day {day.n} · Bible Point</p>
+        <p style={{ margin:'0 0 10px',fontSize:22,fontWeight:700,color:C.text,lineHeight:1.2 }}>{day.point}</p>
+        <span style={{ display:'inline-flex',background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:8,padding:'3px 10px',marginBottom:12 }}>
+          <span style={{ fontSize:12,fontWeight:700,color:C.accent }}>"Wow, God!"</span>
+        </span>
+        <p style={{ margin:'0 0 6px',fontSize:14,color:C.text,lineHeight:1.6,fontStyle:'italic' }}>{day.verseText}</p>
+        <p style={{ margin:0,fontSize:11,fontWeight:700,color:C.accent,textTransform:'uppercase',letterSpacing:'.06em' }}>{day.verseRef}</p>
+      </div>
+      <div style={{ padding:'12px 16px' }}>
+        <p style={{ margin:'0 0 5px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted }}>Crew Icebreaker</p>
+        <p style={{ margin:0,fontSize:14,color:C.text,lineHeight:1.55,fontStyle:'italic' }}>"{day.icebreaker}"</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── CREW KIT — tabbed Joke / Fact / Tip in one card ─────────────────────────
+function CrewKit() {
+  const C = useC()
+  const [tab,setTab] = useState('joke')
+  const [ji,setJi] = useState(0)
+  const [fi,setFi] = useState(0)
+  const [ti,setTi] = useState(0)
+  const [rev,setRev] = useState(false)
+  const joke = JOKES[ji]
+  const nextJoke = () => { setJi(i=>(i+1)%JOKES.length); setRev(false) }
+
+  return (
+    <div style={{ background:C.surface,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden' }}>
+      <div style={{ display:'flex' }}>
+        {['joke','fact','tip'].map(t => (
+          <Tap key={t} onClick={()=>setTab(t)} style={{ flex:1,padding:'12px 0',textAlign:'center',borderBottom:`2px solid ${tab===t?C.accent:C.border}` }}>
+            <span style={{ fontSize:13,fontWeight:tab===t?700:500,color:tab===t?C.accent:C.muted }}>
+              {t === 'joke' ? 'Joke' : t === 'fact' ? 'Fact' : 'Tip'}
+            </span>
+          </Tap>
+        ))}
+      </div>
+      <div style={{ padding:'14px 16px' }}>
+        {tab === 'joke' && (
+          <>
+            <p style={{ margin:'0 0 12px',fontSize:14,fontWeight:600,color:C.text,lineHeight:1.5 }}>{joke.q}</p>
+            {rev
+              ? <div style={{ background:C.accentBg,borderRadius:10,padding:'10px 12px',marginBottom:10,border:`1px solid ${C.accentBdr}` }}>
+                  <p style={{ margin:0,fontSize:14,fontWeight:700,color:C.accent }}>{joke.a}</p>
+                </div>
+              : <Tap onClick={()=>setRev(true)} style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:10,padding:'10px 12px',textAlign:'center',marginBottom:10 }}>
+                  <span style={{ fontSize:13,fontWeight:700,color:C.accent }}>Reveal Punchline</span>
+                </Tap>
+            }
+            <Tap onClick={nextJoke} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',borderRadius:8,border:`1px solid ${C.border}` }}>
+              <RefreshCw size={13} color={C.muted} strokeWidth={2} />
+              <span style={{ fontSize:12,color:C.muted,fontWeight:600 }}>Next Joke ({ji+1}/{JOKES.length})</span>
+            </Tap>
+          </>
+        )}
+        {tab === 'fact' && (
+          <>
+            <p style={{ margin:'0 0 12px',fontSize:14,color:C.text,lineHeight:1.6 }}>🌿 {FACTS[fi]}</p>
+            <Tap onClick={()=>setFi(i=>(i+1)%FACTS.length)} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',borderRadius:8,border:`1px solid ${C.border}` }}>
+              <RefreshCw size={13} color={C.muted} strokeWidth={2} />
+              <span style={{ fontSize:12,color:C.muted,fontWeight:600 }}>Next Fact ({fi+1}/{FACTS.length})</span>
+            </Tap>
+          </>
+        )}
+        {tab === 'tip' && (
+          <>
+            <p style={{ margin:'0 0 12px',fontSize:14,color:C.text,lineHeight:1.55 }}>
+              <span style={{ marginRight:6 }}>{TIPS[ti].icon}</span>{TIPS[ti].tip}
+            </p>
+            <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+              <Tap onClick={()=>setTi(i=>(i-1+TIPS.length)%TIPS.length)} style={{ background:C.surfaceHi,border:`1px solid ${C.border}`,borderRadius:8,padding:'7px 14px' }}>
+                <span style={{ fontSize:13,color:C.muted,fontWeight:600 }}>‹ Prev</span>
+              </Tap>
+              <span style={{ flex:1,textAlign:'center',fontSize:12,color:C.muted }}>Tip {ti+1} of {TIPS.length}</span>
+              <Tap onClick={()=>setTi(i=>(i+1)%TIPS.length)} style={{ background:C.surfaceHi,border:`1px solid ${C.border}`,borderRadius:8,padding:'7px 14px' }}>
+                <span style={{ fontSize:13,color:C.muted,fontWeight:600 }}>Next ›</span>
+              </Tap>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── TODAY PAGE ───────────────────────────────────────────────────────────────
-function TodayPage({ myGroup, live, now, onViewSchedule }) {
+function TodayPage({ myGroup, live, now, onViewSchedule, onChangeGroup }) {
   const C = useC()
   const dayIdx = live.dayIdx >= 0 ? live.dayIdx : (now < new Date('2026-07-13') ? 0 : DAYS.length - 1)
   const day = DAYS[dayIdx]
@@ -354,37 +478,15 @@ function TodayPage({ myGroup, live, now, onViewSchedule }) {
 
   return (
     <div>
-      <div style={{ padding:'calc(14px + env(safe-area-inset-top,0px)) 16px 12px',borderBottom:`1px solid ${C.border}`,background:C.surface,position:'sticky',top:0,zIndex:10 }}>
-        <p style={{ margin:'0 0 1px',fontSize:11,fontWeight:600,color:C.muted }}>Gateway Church · VBS 2026</p>
-        <h2 style={{ margin:0,fontSize:22,fontWeight:700,color:C.text }}>Today</h2>
-      </div>
-      <div style={{ padding:'12px 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
+      <NowHero myGroup={myGroup} live={live} onChangeGroup={onChangeGroup} />
 
-        <NowHero myGroup={myGroup} live={live} />
+      <div style={{ padding:'14px 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
 
-        {/* Bible Point */}
-        <div style={{ background:C.surface,borderRadius:14,border:`1px solid ${C.border}`,padding:'16px',marginTop:10 }}>
-          <p style={{ margin:'0 0 4px',fontSize:11,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:'.06em' }}>Day {day.n} · Bible Point</p>
-          <p style={{ margin:'0 0 10px',fontSize:20,fontWeight:700,color:C.text,lineHeight:1.2 }}>{day.point}</p>
-          <span style={{ display:'inline-flex',background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:8,padding:'4px 10px' }}>
-            <span style={{ fontSize:12,fontWeight:700,color:C.accent }}>"Wow, God!"</span>
-          </span>
-        </div>
+        <TeachingCard day={day} />
 
-        {/* Memory Verse */}
-        <div style={{ background:C.surface,borderRadius:14,border:`1px solid ${C.border}`,borderLeft:`3px solid ${C.accent}`,padding:'14px 16px',marginTop:10 }}>
-          <p style={{ margin:'0 0 6px',fontSize:14,color:C.text,lineHeight:1.6,fontStyle:'italic' }}>{day.verseText}</p>
-          <p style={{ margin:0,fontSize:11,fontWeight:700,color:C.accent,textTransform:'uppercase',letterSpacing:'.06em' }}>{day.verseRef}</p>
-        </div>
-
-        {/* Icebreaker */}
-        <div style={{ background:C.surface,borderRadius:14,border:`1px solid ${C.border}`,padding:'14px 16px',marginTop:10 }}>
-          <p style={{ margin:'0 0 5px',fontSize:11,fontWeight:700,color:C.muted,textTransform:'uppercase',letterSpacing:'.06em' }}>Crew Icebreaker</p>
-          <p style={{ margin:0,fontSize:14,color:C.text,lineHeight:1.55,fontStyle:'italic' }}>"{day.icebreaker}"</p>
-        </div>
-
-        {/* Mini Schedule */}
-        <SecLabel>Today's Schedule</SecLabel>
+        <p style={{ margin:'16px 0 8px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted }}>
+          Coming up
+        </p>
         {upcomingSlots.map(slot => {
           const active = isCur(slot.i)
           const past = isPast(slot)
@@ -392,8 +494,8 @@ function TodayPage({ myGroup, live, now, onViewSchedule }) {
           const displayName = slot.allGroups ? slot.label : (myAct ? myAct.s : 'Station Rotation')
           const displayLoc  = slot.allGroups ? slot.location : myAct?.l
           return (
-            <div key={slot.i} style={{ background:active?C.accentBg:C.surface,borderRadius:12,border:`1px solid ${active?C.accentBdr:C.border}`,padding:'11px 14px',marginBottom:8,opacity:past?0.42:1 }}>
-              <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:3 }}>
+            <div key={slot.i} style={{ background:active?C.accentBg:C.surface,borderRadius:12,border:`1px solid ${active?C.accentBdr:C.border}`,padding:'11px 14px',marginBottom:6,opacity:past?0.4:1 }}>
+              <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2 }}>
                 <p style={{ margin:0,fontSize:14,fontWeight:active?700:500,color:active?C.accent:C.text }}>
                   {slot.emoji} {displayName}
                 </p>
@@ -405,14 +507,14 @@ function TodayPage({ myGroup, live, now, onViewSchedule }) {
             </div>
           )
         })}
-        <button onClick={onViewSchedule} style={{ width:'100%',background:'none',border:`1px solid ${C.border}`,borderRadius:12,padding:'11px',color:C.accent,fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:4,marginBottom:16,background:C.surface }}>
-          See full schedule <ChevronRight size={14} color={C.accent} />
-        </button>
+        <Tap onClick={onViewSchedule} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'10px',borderRadius:12,border:`1px solid ${C.border}`,background:C.surface,marginBottom:14 }}>
+          <span style={{ fontSize:13,fontWeight:600,color:C.accent }}>Full schedule</span>
+          <ChevronRight size={14} color={C.accent} />
+        </Tap>
 
-        {/* Reminders — collapsed */}
         <Tap onClick={()=>setShowReminders(p=>!p)} style={{ background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:showReminders?8:0 }}>
           <span style={{ fontSize:14,fontWeight:600,color:C.text }}>
-            Reminders for today <span style={{ color:C.muted,fontWeight:400,fontSize:13 }}>({day.reminders.length})</span>
+            Reminders <span style={{ color:C.muted,fontWeight:400,fontSize:13 }}>({day.reminders.length})</span>
           </span>
           <ChevronDown size={16} color={C.muted} style={{ transform:showReminders?'rotate(180deg)':'rotate(0)',transition:'transform 0.2s ease',flexShrink:0 }} />
         </Tap>
@@ -428,46 +530,82 @@ function TodayPage({ myGroup, live, now, onViewSchedule }) {
 }
 
 // ─── SCHEDULE PAGE ────────────────────────────────────────────────────────────
-function SchedulePage({ myGroup, live, now }) {
+function SchedulePage({ myGroup, live, now, onChangeGroup }) {
   const C = useC()
+  const g = myGroup ? GROUPS[myGroup] : null
   const cur = now.getHours()*60+now.getMinutes()
   const inVbs = ['live','before','after'].includes(live.status)
 
   return (
     <div>
-      <div style={{ padding:'calc(14px + env(safe-area-inset-top,0px)) 16px 12px',borderBottom:`1px solid ${C.border}`,background:C.surface,position:'sticky',top:0,zIndex:10 }}>
-        <h2 style={{ margin:'0 0 2px',fontSize:22,fontWeight:700,color:C.text }}>Schedule</h2>
+      <div style={{ padding:'calc(22px + env(safe-area-inset-top,0px)) 16px 14px' }}>
+        <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4 }}>
+          <h2 style={{ margin:0,fontSize:28,fontWeight:700,color:C.text }}>Schedule</h2>
+          {g && (
+            <Tap onClick={onChangeGroup} style={{ background:g.bg,border:`1px solid ${g.color}50`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:6 }}>
+              <div style={{ width:8,height:8,borderRadius:'50%',background:g.color }} />
+              <span style={{ fontSize:11,fontWeight:700,color:g.color }}>{g.label.split(' ')[0]}</span>
+            </Tap>
+          )}
+        </div>
         <p style={{ margin:0,fontSize:12,color:C.muted }}>July 13–17 · 9:00 AM – 12:00 PM daily</p>
       </div>
-      <div style={{ padding:'12px 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
+
+      <div style={{ padding:'0 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
         {SLOTS.map((slot,i) => {
           const e = toMin(slot.end)
           const isCur = live.status==='live' && live.slotIdx===i
           const isPast = inVbs && cur>e
           const myAct = myGroup ? getActivity(myGroup,i) : null
+          const displayName = slot.allGroups ? slot.label : (myAct ? myAct.s : 'Station Rotation')
+          const displayLoc  = slot.allGroups ? slot.location : myAct?.l
+
+          // Current slot — dominant full-color card
+          if (isCur) return (
+            <div key={i} style={{ background:C.accent,borderRadius:16,padding:'18px 20px',marginBottom:8 }}>
+              <div style={{ display:'flex',alignItems:'center',gap:6,marginBottom:12 }}>
+                <div style={{ width:6,height:6,borderRadius:'50%',background:'rgba(255,255,255,0.85)',animation:'livePulse 2s ease infinite' }} />
+                <span style={{ fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.8)',letterSpacing:'.08em',textTransform:'uppercase' }}>
+                  Now · {fmtTime(slot.start)} – {fmtTime(slot.end)}
+                </span>
+              </div>
+              <p style={{ margin:'0 0 4px',fontSize:28,fontWeight:800,color:'#fff',lineHeight:1.1 }}>{displayName}</p>
+              {displayLoc && <p style={{ margin:'0 0 16px',fontSize:13,color:'rgba(255,255,255,0.82)' }}>📍 {displayLoc}</p>}
+              <div style={{ height:3,background:'rgba(255,255,255,0.25)',borderRadius:99,overflow:'hidden',marginBottom:8 }}>
+                <div style={{ height:'100%',width:`${Math.min(100,Math.max(0,live.progress*100))}%`,background:'#fff',borderRadius:99,transition:'width 30s linear' }} />
+              </div>
+              <span style={{ fontSize:12,color:'rgba(255,255,255,0.85)',fontWeight:600 }}>{live.minLeft} min left</span>
+            </div>
+          )
+
+          // Past slots — single compact faded row
+          if (isPast) return (
+            <div key={i} style={{ display:'flex',alignItems:'center',gap:10,padding:'7px 4px',opacity:0.3,marginBottom:2 }}>
+              <p style={{ margin:0,fontSize:11,color:C.muted,whiteSpace:'nowrap',minWidth:58,flexShrink:0 }}>{fmtTime(slot.start)}</p>
+              <div style={{ width:1,height:14,background:C.border,flexShrink:0 }} />
+              <p style={{ margin:0,fontSize:13,color:C.text }}>{displayName}</p>
+            </div>
+          )
+
+          // Future slots — compact timeline
           return (
             <div key={i} style={{ display:'flex',gap:10,alignItems:'stretch' }}>
               <div style={{ display:'flex',flexDirection:'column',alignItems:'center',width:64,paddingTop:11,flexShrink:0 }}>
-                <p style={{ margin:0,fontSize:11,fontWeight:600,color:isCur?C.accent:C.muted,whiteSpace:'nowrap' }}>{fmtTime(slot.start)}</p>
-                {i<SLOTS.length-1 && <div style={{ flex:1,width:1,background:isCur?C.accent:C.border,marginTop:5,marginBottom:4 }} />}
+                <p style={{ margin:0,fontSize:11,fontWeight:600,color:C.muted,whiteSpace:'nowrap' }}>{fmtTime(slot.start)}</p>
+                {i<SLOTS.length-1 && <div style={{ flex:1,width:1,background:C.border,marginTop:5,marginBottom:4 }} />}
               </div>
               <div style={{ flex:1,marginBottom:6 }}>
-                <div style={{ background:isCur?C.accentBg:C.surface,borderRadius:12,padding:'11px 14px',border:`1px solid ${isCur?C.accentBdr:C.border}`,opacity:isPast?0.42:1 }}>
-                  <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:myAct&&!slot.allGroups?8:0 }}>
-                    <p style={{ margin:0,fontSize:14,fontWeight:isCur?700:500,color:isCur?C.accent:C.text }}>
-                      {slot.emoji} {slot.allGroups?slot.label:'Station Rotation'}
-                    </p>
-                    {isCur && <span style={{ fontSize:9,fontWeight:700,background:C.accent,color:'#fff',padding:'2px 8px',borderRadius:99,textTransform:'uppercase',letterSpacing:'.06em',flexShrink:0 }}>NOW</span>}
-                  </div>
+                <div style={{ background:C.surface,borderRadius:12,padding:'10px 14px',border:`1px solid ${C.border}` }}>
+                  <p style={{ margin:0,fontSize:14,fontWeight:500,color:C.text,marginBottom:myAct&&!slot.allGroups?8:0 }}>
+                    {slot.emoji} {slot.allGroups?slot.label:'Station Rotation'}
+                  </p>
                   {slot.allGroups && <p style={{ margin:'3px 0 0',fontSize:11,color:C.muted }}>📍 {slot.location} · All Groups</p>}
                   {myAct && !slot.allGroups && myGroup && (
-                    <div style={{ background:GROUPS[myGroup].bg,borderRadius:8,padding:'8px 10px',border:`1px solid ${GROUPS[myGroup].color}30` }}>
-                      <p style={{ margin:'0 0 2px',fontSize:11,fontWeight:700,color:GROUPS[myGroup].color,textTransform:'uppercase',letterSpacing:'.06em' }}>{GROUPS[myGroup].label} Group</p>
-                      <p style={{ margin:'0 0 2px',fontSize:14,fontWeight:700,color:C.text }}>{myAct.s}</p>
+                    <div style={{ background:GROUPS[myGroup].bg,borderRadius:8,padding:'7px 10px',border:`1px solid ${GROUPS[myGroup].color}30` }}>
+                      <p style={{ margin:'0 0 2px',fontSize:12,fontWeight:700,color:GROUPS[myGroup].color }}>{myAct.s}</p>
                       <p style={{ margin:0,fontSize:11,color:C.muted }}>📍 {myAct.l}</p>
                     </div>
                   )}
-                  <p style={{ margin:'6px 0 0',fontSize:10,color:C.muted,opacity:0.6 }}>{fmtTime(slot.start)} – {fmtTime(slot.end)} · {toMin(slot.end)-toMin(slot.start)} min</p>
                 </div>
               </div>
             </div>
@@ -502,21 +640,32 @@ function CoffeePage() {
     window.location.href = `sms:${COFFEE_NUM}&body=${encodeURIComponent(msg)}`
     setSent(true); setTimeout(()=>setSent(false),4000)
   }
+
+  const FL = ({ children }) => (
+    <p style={{ margin:'20px 0 8px',fontSize:13,fontWeight:600,color:C.text }}>{children}</p>
+  )
+
   return (
     <div>
-      <div style={{ padding:'calc(14px + env(safe-area-inset-top,0px)) 16px 12px',borderBottom:`1px solid ${C.border}`,background:C.surface,position:'sticky',top:0,zIndex:10 }}>
-        <h2 style={{ margin:'0 0 2px',fontSize:22,fontWeight:700,color:C.text }}>Coffee</h2>
-        <p style={{ margin:0,fontSize:12,color:C.muted }}>The Café @ Gateway · Pearson Fellowship Hall</p>
+      <div style={{ padding:'calc(22px + env(safe-area-inset-top,0px)) 16px 14px' }}>
+        <h2 style={{ margin:'0 0 2px',fontSize:28,fontWeight:700,color:C.text }}>Coffee</h2>
+        <p style={{ margin:0,fontSize:13,color:C.muted }}>The Café @ Gateway · Pearson Fellowship Hall</p>
       </div>
-      <div style={{ padding:'14px 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
-        {sent && <div style={{ background:C.greenBg,border:`1px solid ${C.accentBdr}`,borderRadius:12,padding:'12px 16px',marginBottom:12,animation:'fadeUp 0.3s ease both',display:'flex',alignItems:'center',gap:10 }}><span style={{ fontSize:18 }}>✅</span><p style={{ margin:0,fontSize:14,color:C.green,fontWeight:600 }}>Order sent! Open your texts and tap send.</p></div>}
 
-        <SecLabel>1 · Your Name</SecLabel>
+      <div style={{ padding:'0 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
+        {sent && (
+          <div style={{ background:C.greenBg,border:`1px solid ${C.accentBdr}`,borderRadius:12,padding:'12px 16px',marginBottom:12,animation:'fadeUp 0.3s ease both',display:'flex',alignItems:'center',gap:10 }}>
+            <span style={{ fontSize:18 }}>✅</span>
+            <p style={{ margin:0,fontSize:14,color:C.green,fontWeight:600 }}>Order sent! Open your texts and tap send.</p>
+          </div>
+        )}
+
+        <FL>Your name</FL>
         <SCard style={{ padding:'12px 14px' }}>
           <input value={name} onChange={e=>setName(e.target.value)} placeholder="Enter your name..." style={{ width:'100%',background:'transparent',border:'none',outline:'none',fontSize:16,color:C.text,fontFamily:'inherit',padding:0 }} />
         </SCard>
 
-        <SecLabel>2 · Hot or Cold?</SecLabel>
+        <FL>Hot or cold?</FL>
         <div style={{ display:'flex',gap:8,marginBottom:isCold?4:0 }}>
           {Object.entries(MENU).map(([key,m]) => (
             <Tap key={key} onClick={()=>{setCat(key);setSel([]);setSize('')}} style={{ flex:1,padding:'12px',borderRadius:12,border:`1.5px solid ${cat===key?C.accent:C.border}`,background:cat===key?C.accentBg:C.surface,textAlign:'center' }}>
@@ -527,24 +676,25 @@ function CoffeePage() {
         </div>
         {isCold && <p style={{ margin:'6px 0 0',fontSize:11,color:C.muted }}>All cold drinks are 16 oz</p>}
 
-        <SecLabel>3 · Choose Your Drink{sel.length>0?` (${sel.length} selected)`:''}</SecLabel>
+        <FL>Choose your drink{sel.length>0?` · ${sel.length} selected`:''}</FL>
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14 }}>
           {MENU[cat].items.map(item => {
             const on = sel.includes(item)
-            return <Tap key={item} onClick={()=>toggleDrink(item)} style={{ background:on?C.accentBg:C.surface,border:`1.5px solid ${on?C.accent:C.border}`,borderRadius:10,padding:'11px 12px' }}><p style={{ margin:0,fontSize:13,fontWeight:on?700:500,color:on?C.accent:C.text }}>{item}</p></Tap>
+            return <Tap key={item} onClick={()=>toggleDrink(item)} style={{ background:on?C.accentBg:C.surface,border:`1.5px solid ${on?C.accent:C.border}`,borderRadius:10,padding:'11px 12px' }}>
+              <p style={{ margin:0,fontSize:13,fontWeight:on?700:500,color:on?C.accent:C.text }}>{item}</p>
+            </Tap>
           })}
         </div>
 
         {!isCold && (
           <>
-            <SecLabel>4 · Size</SecLabel>
+            <FL>Size</FL>
             <div style={{ display:'flex',gap:8,marginBottom:14 }}>
               {SIZES.map(s => <Tap key={s} onClick={()=>setSize(s)} style={{ flex:1,padding:'10px',borderRadius:10,border:`1.5px solid ${size===s?C.accent:C.border}`,background:size===s?C.accentBg:C.surface,textAlign:'center' }}><span style={{ fontSize:14,fontWeight:700,color:size===s?C.accent:C.muted }}>{s}</span></Tap>)}
             </div>
           </>
         )}
 
-        {/* Extras — collapsed */}
         <Tap onClick={()=>setShowExtras(p=>!p)} style={{ background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:showExtras?8:14 }}>
           <span style={{ fontSize:14,fontWeight:500,color:C.text }}>
             Extras{exSel.length>0?` · ${exSel.length} selected`:''}<span style={{ color:C.muted,fontSize:13 }}> (optional)</span>
@@ -555,12 +705,14 @@ function CoffeePage() {
           <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14 }}>
             {EXTRAS.map(item => {
               const on = exSel.includes(item)
-              return <Tap key={item} onClick={()=>toggleEx(item)} style={{ background:on?C.accentBg:C.surface,border:`1.5px solid ${on?C.accent:C.border}`,borderRadius:10,padding:'10px 12px' }}><p style={{ margin:0,fontSize:12,fontWeight:on?700:500,color:on?C.accent:C.muted }}>{item}</p></Tap>
+              return <Tap key={item} onClick={()=>toggleEx(item)} style={{ background:on?C.accentBg:C.surface,border:`1.5px solid ${on?C.accent:C.border}`,borderRadius:10,padding:'10px 12px' }}>
+                <p style={{ margin:0,fontSize:12,fontWeight:on?700:500,color:on?C.accent:C.muted }}>{item}</p>
+              </Tap>
             })}
           </div>
         )}
 
-        <SecLabel>Notes (optional)</SecLabel>
+        <FL>Notes (optional)</FL>
         <SCard style={{ padding:'12px 14px',marginBottom:18 }}>
           <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Any other requests..." style={{ width:'100%',background:'transparent',border:'none',outline:'none',fontSize:14,color:C.text,fontFamily:'inherit',resize:'none',minHeight:48,padding:0 }} />
         </SCard>
@@ -579,70 +731,22 @@ function CoffeePage() {
 // ─── CREW PAGE ────────────────────────────────────────────────────────────────
 function CrewPage({ live }) {
   const C = useC()
-  const [ji,setJi] = useState(0)
-  const [fi,setFi] = useState(0)
-  const [ti,setTi] = useState(0)
-  const [rev,setRev] = useState(false)
-  const joke = JOKES[ji]
   const dayData = live.dayIdx>=0 ? DAYS[live.dayIdx] : DAYS[0]
-  const nextJoke = () => { setJi(i=>(i+1)%JOKES.length); setRev(false) }
+
   return (
     <div>
-      <div style={{ padding:'calc(14px + env(safe-area-inset-top,0px)) 16px 12px',borderBottom:`1px solid ${C.border}`,background:C.surface,position:'sticky',top:0,zIndex:10 }}>
-        <h2 style={{ margin:'0 0 2px',fontSize:22,fontWeight:700,color:C.text }}>Crew</h2>
-        <p style={{ margin:0,fontSize:12,color:C.muted }}>Resources for crew leaders</p>
+      <div style={{ padding:'calc(22px + env(safe-area-inset-top,0px)) 16px 14px' }}>
+        <h2 style={{ margin:'0 0 2px',fontSize:28,fontWeight:700,color:C.text }}>Crew</h2>
+        <p style={{ margin:0,fontSize:13,color:C.muted }}>Resources for crew leaders</p>
       </div>
-      <div style={{ padding:'14px 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
 
-        <SecLabel>Today's Icebreaker · Day {dayData.n}</SecLabel>
-        <SCard style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}` }}>
-          <p style={{ margin:'0 0 4px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.accent }}>Use this to open crew time</p>
+      <div style={{ padding:'0 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
+        <div style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:16,padding:'16px 18px',marginBottom:12 }}>
+          <p style={{ margin:'0 0 5px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.accent }}>Crew Icebreaker · Day {dayData.n}</p>
           <p style={{ margin:0,fontSize:15,color:C.text,lineHeight:1.5,fontStyle:'italic' }}>"{dayData.icebreaker}"</p>
-        </SCard>
+        </div>
 
-        <SecLabel>Crew Joke</SecLabel>
-        <SCard>
-          <p style={{ margin:'0 0 10px',fontSize:14,fontWeight:600,color:C.text,lineHeight:1.5 }}>{joke.q}</p>
-          {rev ? (
-            <div style={{ background:C.accentBg,borderRadius:8,padding:'10px 12px',marginBottom:10,border:`1px solid ${C.accentBdr}` }}>
-              <p style={{ margin:0,fontSize:14,fontWeight:700,color:C.accent }}>{joke.a}</p>
-            </div>
-          ) : (
-            <Tap onClick={()=>setRev(true)} style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:8,padding:'10px 12px',textAlign:'center',marginBottom:10 }}>
-              <span style={{ fontSize:13,fontWeight:700,color:C.accent }}>Reveal Punchline</span>
-            </Tap>
-          )}
-          <Tap onClick={nextJoke} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',borderRadius:8,border:`1px solid ${C.border}` }}>
-            <RefreshCw size={13} color={C.muted} strokeWidth={2} />
-            <span style={{ fontSize:12,color:C.muted,fontWeight:600 }}>Next Joke ({ji+1}/{JOKES.length})</span>
-          </Tap>
-        </SCard>
-
-        <SecLabel>Rainforest Fact</SecLabel>
-        <SCard>
-          <p style={{ margin:'0 0 10px',fontSize:14,color:C.text,lineHeight:1.6 }}>🌿 {FACTS[fi]}</p>
-          <Tap onClick={()=>setFi(i=>(i+1)%FACTS.length)} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',borderRadius:8,border:`1px solid ${C.border}` }}>
-            <RefreshCw size={13} color={C.muted} strokeWidth={2} />
-            <span style={{ fontSize:12,color:C.muted,fontWeight:600 }}>Next Fact ({fi+1}/{FACTS.length})</span>
-          </Tap>
-        </SCard>
-
-        <SecLabel>Leader Tip</SecLabel>
-        <SCard>
-          <p style={{ margin:'0 0 12px',fontSize:14,color:C.text,lineHeight:1.55 }}>
-            <span style={{ marginRight:6 }}>{TIPS[ti].icon}</span>{TIPS[ti].tip}
-          </p>
-          <div style={{ display:'flex',alignItems:'center',gap:8 }}>
-            <Tap onClick={()=>setTi(i=>(i-1+TIPS.length)%TIPS.length)} style={{ background:C.surfaceHi,border:`1px solid ${C.border}`,borderRadius:8,padding:'7px 14px' }}>
-              <span style={{ fontSize:13,color:C.muted,fontWeight:600 }}>‹ Prev</span>
-            </Tap>
-            <span style={{ flex:1,textAlign:'center',fontSize:12,color:C.muted }}>Tip {ti+1} of {TIPS.length}</span>
-            <Tap onClick={()=>setTi(i=>(i+1)%TIPS.length)} style={{ background:C.surfaceHi,border:`1px solid ${C.border}`,borderRadius:8,padding:'7px 14px' }}>
-              <span style={{ fontSize:13,color:C.muted,fontWeight:600 }}>Next ›</span>
-            </Tap>
-          </div>
-        </SCard>
-
+        <CrewKit />
       </div>
     </div>
   )
@@ -691,7 +795,6 @@ export default function VBSLeaderHub() {
   useEffect(() => { const t=setInterval(()=>setNow(new Date()),60000); return()=>clearInterval(t) },[])
 
   const live = getLive(now)
-  const g = myGroup ? GROUPS[myGroup] : null
 
   if (splash) return <TC.Provider value={TH}><Splash onDone={()=>setSplash(false)} /></TC.Provider>
   const saveGroup = g => { try { localStorage.setItem('rfGroup', g) } catch {} setMyGroup(g) }
@@ -700,21 +803,9 @@ export default function VBSLeaderHub() {
   return (
     <TC.Provider value={TH}>
       <div style={{ background:TH.bg,minHeight:'100vh',color:TH.text,fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",maxWidth:430,margin:'0 auto',position:'relative' }}>
-        <div style={{ padding:'calc(12px + env(safe-area-inset-top,0px)) 16px 12px',display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${TH.border}`,background:TH.surface,position:'sticky',top:0,zIndex:20 }}>
-          <div>
-            <p style={{ margin:0,fontSize:10,fontWeight:600,letterSpacing:'0.12em',textTransform:'uppercase',color:TH.muted,lineHeight:1 }}>Gateway Church · VBS 2026</p>
-            <h1 style={{ margin:0,fontSize:20,fontWeight:700,color:TH.text,lineHeight:1.2 }}>Rainforest Falls</h1>
-          </div>
-          {g && (
-            <Tap onClick={()=>setChanging(true)} style={{ background:g.bg,border:`1px solid ${g.color}50`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:6 }}>
-              <div style={{ width:8,height:8,borderRadius:'50%',background:g.color }} />
-              <span style={{ fontSize:11,fontWeight:700,color:g.color }}>{g.label.split(' ')[0]}</span>
-            </Tap>
-          )}
-        </div>
         <div key={page} style={{ animation:'tabFade 220ms cubic-bezier(0.2,0,0,1) both' }}>
-          {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onViewSchedule={()=>setPage('schedule')} />}
-          {page==='schedule' && <SchedulePage myGroup={myGroup} live={live} now={now} />}
+          {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onViewSchedule={()=>setPage('schedule')} onChangeGroup={()=>setChanging(true)} />}
+          {page==='schedule' && <SchedulePage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} />}
           {page==='coffee'   && <CoffeePage />}
           {page==='crew'     && <CrewPage live={live} />}
         </div>
