@@ -9,14 +9,14 @@ const GCSS = `
   @keyframes fadeUp     { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   @keyframes livePulse  { 0%,100%{opacity:1} 50%{opacity:0.35} }
   * { -webkit-tap-highlight-color:transparent; box-sizing:border-box; }
-  body { overscroll-behavior:none; margin:0; background:#f5f5f5; font-family:'Plus Jakarta Sans',system-ui,sans-serif; }
+  body { overscroll-behavior:none; margin:0; background:#F2F2F7; font-family:'Plus Jakarta Sans',system-ui,sans-serif; }
   button { font-family:inherit; }
   ::-webkit-scrollbar { width:0; }
 `
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const TH = {
-  bg:'#f5f5f5', surface:'#ffffff', surfaceHi:'#f0f0f0',
+  bg:'#F2F2F7', surface:'#ffffff', surfaceHi:'#f0f0f0',
   border:'#e8e8e8',
   accent:'#16a34a', accentBg:'rgba(22,163,74,0.09)', accentBdr:'rgba(22,163,74,0.28)',
   brand:'#16a34a', brandBg:'rgba(22,163,74,0.09)', brandBdr:'rgba(22,163,74,0.28)',
@@ -32,6 +32,11 @@ const useC = () => useContext(TC)
 function hexToRgba(hex, alpha) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
   return `rgba(${r},${g},${b},${alpha})`
+}
+function makeGradient(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16)
+  const dark = `rgb(${Math.round(r*0.6)},${Math.round(g*0.6)},${Math.round(b*0.6)})`
+  return `linear-gradient(160deg, ${dark} 0%, ${hex} 100%)`
 }
 function makeTheme(color, bg, bdr) {
   return { ...TH, accent:color, accentBg:bg, accentBdr:bdr, brand:color, brandBg:bg, brandBdr:bdr, banBg:color, banBdr:bdr }
@@ -234,7 +239,7 @@ function SCard({ children, style }) {
 
 function SecLabel({ children }) {
   const C = useC()
-  return <p style={{ margin:'20px 0 8px', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:C.muted }}>{children}</p>
+  return <p style={{ margin:'20px 0 8px', fontSize:13, fontWeight:600, color:C.muted }}>{children}</p>
 }
 
 function Bar({ pct, color }) {
@@ -318,7 +323,7 @@ function NowHero({ myGroup, live, onChangeGroup }) {
   const C = useC()
   const g = myGroup ? GROUPS[myGroup] : null
   const safePad = 'calc(22px + env(safe-area-inset-top,0px))'
-  const greenBase = { background:C.accent, padding:`${safePad} 20px 26px`, borderRadius:'0 0 24px 24px' }
+  const greenBase = { background:makeGradient(C.accent), padding:`${safePad} 20px 26px`, borderRadius:'0 0 24px 24px' }
   const lightBase = { background:C.surface, padding:`${safePad} 20px 22px`, borderBottom:`1px solid ${C.border}` }
 
   const hasColorGroup = myGroup && myGroup !== 'none'
@@ -434,12 +439,12 @@ function TeachingCard({ day }) {
       <div style={{ background:`${day.accentColor}14`,borderBottom:`1px solid ${C.border}`,padding:'14px 16px',display:'flex',alignItems:'center',gap:14 }}>
         <img src={BUDDY_IMGS[day.n]} alt={day.buddy} style={{ width:72,height:72,objectFit:'contain',flexShrink:0 }} />
         <div>
-          <p style={{ margin:'0 0 2px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted }}>Day {day.n} Buddy</p>
+          <p style={{ margin:'0 0 2px',fontSize:11,fontWeight:600,color:C.muted }}>Day {day.n} Buddy</p>
           <p style={{ margin:0,fontSize:20,fontWeight:700,color:C.text,lineHeight:1.2 }}>{day.buddy}</p>
         </div>
       </div>
       <div style={{ padding:'16px 16px 14px',borderBottom:`1px solid ${C.border}` }}>
-        <p style={{ margin:'0 0 8px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted }}>Day {day.n} · Bible Point</p>
+        <p style={{ margin:'0 0 8px',fontSize:11,fontWeight:600,color:C.muted }}>Day {day.n} · Bible Point</p>
         <p style={{ margin:'0 0 10px',fontSize:22,fontWeight:700,color:C.text,lineHeight:1.2 }}>{day.point}</p>
         <span style={{ display:'inline-flex',background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:8,padding:'3px 10px',marginBottom:12 }}>
           <span style={{ fontSize:12,fontWeight:700,color:C.accent }}>"Wow, God!"</span>
@@ -448,7 +453,7 @@ function TeachingCard({ day }) {
         <p style={{ margin:0,fontSize:11,fontWeight:700,color:C.accent,textTransform:'uppercase',letterSpacing:'.06em' }}>{day.verseRef}</p>
       </div>
       <div style={{ padding:'12px 16px' }}>
-        <p style={{ margin:'0 0 5px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted }}>Crew Icebreaker</p>
+        <p style={{ margin:'0 0 5px',fontSize:11,fontWeight:600,color:C.muted }}>Crew Icebreaker</p>
         <p style={{ margin:0,fontSize:14,color:C.text,lineHeight:1.55,fontStyle:'italic' }}>"{day.icebreaker}"</p>
       </div>
     </div>
@@ -549,29 +554,31 @@ function TodayPage({ myGroup, live, now, onViewSchedule, onChangeGroup }) {
 
         <TeachingCard day={day} />
 
-        <p style={{ margin:'16px 0 8px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted }}>
+        <p style={{ margin:'16px 0 8px',fontSize:13,fontWeight:600,color:C.muted }}>
           Coming up
         </p>
-        {upcomingSlots.map(slot => {
-          const active = isCur(slot.i)
-          const past = isPast(slot)
-          const myAct = myGroup ? getActivity(myGroup, slot.i) : null
-          const displayName = slot.allGroups ? slot.label : (myAct ? myAct.s : 'Station Rotation')
-          const displayLoc  = slot.allGroups ? slot.location : myAct?.l
-          return (
-            <div key={slot.i} style={{ borderLeft:`3px solid ${active?C.accent:C.border}`,padding:'8px 12px',marginBottom:8,opacity:past?0.35:1,background:active?C.accentBg:'transparent',borderRadius:active?'0 8px 8px 0':0 }}>
-              <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2 }}>
-                <p style={{ margin:0,fontSize:14,fontWeight:active?700:500,color:active?C.accent:C.text }}>
-                  {slot.emoji} {displayName}
+        <div style={{ background:C.surface,borderRadius:13,overflow:'hidden',marginBottom:8 }}>
+          {upcomingSlots.map((slot, idx) => {
+            const active = isCur(slot.i)
+            const past = isPast(slot)
+            const myAct = myGroup ? getActivity(myGroup, slot.i) : null
+            const displayName = slot.allGroups ? slot.label : (myAct ? myAct.s : 'Station Rotation')
+            const displayLoc  = slot.allGroups ? slot.location : myAct?.l
+            return (
+              <div key={slot.i} style={{ padding:'10px 14px',opacity:past?0.35:1,background:active?C.accentBg:'transparent',borderTop:idx>0?`0.5px solid ${C.border}`:'none' }}>
+                <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2 }}>
+                  <p style={{ margin:0,fontSize:14,fontWeight:active?700:500,color:active?C.accent:C.text }}>
+                    {slot.emoji} {displayName}
+                  </p>
+                  {active && <span style={{ fontSize:9,fontWeight:700,background:C.accent,color:'#fff',padding:'2px 8px',borderRadius:99,textTransform:'uppercase',letterSpacing:'.06em',flexShrink:0 }}>NOW</span>}
+                </div>
+                <p style={{ margin:0,fontSize:11,color:active?C.accent:C.muted }}>
+                  {fmtTime(slot.start)} – {fmtTime(slot.end)}{displayLoc ? ` · 📍 ${displayLoc}` : ''}
                 </p>
-                {active && <span style={{ fontSize:9,fontWeight:700,background:C.accent,color:'#fff',padding:'2px 8px',borderRadius:99,textTransform:'uppercase',letterSpacing:'.06em',flexShrink:0 }}>NOW</span>}
               </div>
-              <p style={{ margin:0,fontSize:11,color:active?C.accent:C.muted }}>
-                {fmtTime(slot.start)} – {fmtTime(slot.end)}{displayLoc ? ` · 📍 ${displayLoc}` : ''}
-              </p>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
         <Tap onClick={onViewSchedule} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'10px',borderRadius:12,border:`1px solid ${C.border}`,background:C.surface,marginBottom:14 }}>
           <span style={{ fontSize:13,fontWeight:600,color:C.accent }}>Full schedule</span>
           <ChevronRight size={14} color={C.accent} />
@@ -615,7 +622,7 @@ function SchedulePage({ myGroup, live, now, onChangeGroup }) {
 
           // Current slot — dominant full-color card
           if (isCur) return (
-            <div key={i} style={{ background:C.accent,borderRadius:16,padding:'18px 20px',marginBottom:8 }}>
+            <div key={i} style={{ background:makeGradient(C.accent),borderRadius:16,padding:'18px 20px',marginBottom:8 }}>
               <div style={{ display:'flex',alignItems:'center',gap:6,marginBottom:12 }}>
                 <div style={{ width:6,height:6,borderRadius:'50%',background:'rgba(255,255,255,0.85)',animation:'livePulse 2s ease infinite' }} />
                 <span style={{ fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.8)',letterSpacing:'.08em',textTransform:'uppercase' }}>
@@ -1135,9 +1142,8 @@ function BottomNav({ page, setPage }) {
       {TABS.map(({id,label,Icon}) => {
         const on = page===id
         return (
-          <button key={id} onClick={()=>setPage(id)} style={{ flex:1,background:'none',border:'none',cursor:'pointer',padding:'10px 0 8px',display:'flex',flexDirection:'column',alignItems:'center',gap:2 }}>
-            <div style={{ height:3,width:20,borderRadius:99,background:on?C.accent:'transparent',marginBottom:4,transition:'background 0.2s' }} />
-            <Icon size={22} strokeWidth={1.75} color={on?C.accent:C.muted} style={{ transition:'color 0.2s' }} />
+          <button key={id} onClick={()=>setPage(id)} style={{ flex:1,background:'none',border:'none',cursor:'pointer',padding:'10px 0 8px',display:'flex',flexDirection:'column',alignItems:'center',gap:3 }}>
+            <Icon size={22} strokeWidth={on?2.25:1.75} color={on?C.accent:C.muted} style={{ transition:'color 0.2s' }} />
             <span style={{ fontSize:10,fontWeight:on?700:500,color:on?C.accent:C.muted,letterSpacing:'0.04em',transition:'color 0.2s' }}>{label}</span>
           </button>
         )
