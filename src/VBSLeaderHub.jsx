@@ -981,7 +981,7 @@ function CoffeePage({ myGroup }) {
             <SCard style={{ padding:'12px 14px', marginTop:8 }}>
               <input value={deliverTo} onChange={e => setDeliverTo(e.target.value)}
                 placeholder="Where? (e.g. Blue Group, Wild Games…)"
-                style={{ width:'100%', background:'transparent', border:'none', outline:'none', fontSize:14, color:C.text, fontFamily:'inherit', padding:0 }} />
+                style={{ width:'100%', background:'transparent', border:'none', outline:'none', fontSize:16, color:C.text, fontFamily:'inherit', padding:0 }} />
             </SCard>
           )}
 
