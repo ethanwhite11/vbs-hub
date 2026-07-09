@@ -93,9 +93,9 @@ const DAYS = [
 
 // ─── COFFEE ───────────────────────────────────────────────────────────────────
 const MENU = {
-  hot:  { label:'Hot',  emoji:'☕', items:['Americano','Latte / Cappuccino','Almond Milk Latte','Breve Latte','Mocha','Caramel Macchiato','Chai Tea Latte','London Fog','Hot Chocolate'] },
-  iced: { label:'Iced', emoji:'❄️', items:['Americano','Latte / Cappuccino','Almond Milk Latte','Breve Latte','Mocha','Caramel Macchiato','Chai Tea Latte'] },
-  cold: { label:'Cold', emoji:'🧊', items:['Italian Soda','Joe Chill','Chai Chill','Fruit Smoothie'] },
+  hot:  { label:'Hot',  emoji:'☕', items:['Americano','Latte / Cappuccino','Almond Milk Latte','Oat Milk Latte','Breve Latte','Mocha','Caramel Macchiato','Chai Tea Latte','Dirty Chai Latte','London Fog','Hot Chocolate'] },
+  iced: { label:'Iced', emoji:'❄️', items:['Americano','Latte / Cappuccino','Almond Milk Latte','Oat Milk Latte','Breve Latte','Mocha','Caramel Macchiato','Chai Tea Latte','Dirty Chai Latte'] },
+  cold: { label:'Cold', emoji:'🧊', items:['Italian Soda','Joe Chill','Chai Chill','Smoothie'] },
 }
 const SYRUPS = [
   { name:'Caramel',         sf:true  },
@@ -118,10 +118,10 @@ const SYRUPS = [
   { name:'Dubai Chocolate', sf:true  },
 ]
 const MILKS = ['Almond Milk','Oat Milk']
-const MILK_ELIGIBLE = new Set(['Americano','Latte / Cappuccino','Breve Latte','Mocha','Chai Tea Latte','London Fog','Hot Chocolate'])
+const MILK_ELIGIBLE = new Set(['Americano','Latte / Cappuccino','Breve Latte','Mocha','Chai Tea Latte','Dirty Chai Latte','London Fog','Hot Chocolate'])
 const SYRUP_REQUIRED = new Set(['Italian Soda'])
 const EXTRAS = ['Extra Shot of Espresso','Bottled Water','Hot Tea','Biscotti','Trail Mix','Mentos']
-const SIZES = ['8 oz','12 oz','16 oz']
+const SIZES = ['16 oz']
 const COFFEE_NUM = '7276880591'
 
 // ─── CREW CONTENT ─────────────────────────────────────────────────────────────
@@ -251,7 +251,11 @@ function Bar({ pct, color }) {
 function Splash({ onDone }) {
   const [out,setOut] = useState(false)
   const [logoErr,setLogoErr] = useState(false)
-  useEffect(() => { const t1=setTimeout(()=>setOut(true),1600),t2=setTimeout(onDone,2100); return()=>{clearTimeout(t1);clearTimeout(t2)} },[])
+  useEffect(() => {
+    document.body.style.background = '#0d1f15'
+    const t1=setTimeout(()=>setOut(true),1600),t2=setTimeout(onDone,2100)
+    return()=>{clearTimeout(t1);clearTimeout(t2);document.body.style.background=''}
+  },[])
   return (
     <div style={{ position:'fixed',inset:0,zIndex:1000,background:'#0d1f15',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',opacity:out?0:1,transition:out?'opacity 0.5s ease':'none' }}>
       {logoErr
@@ -960,7 +964,7 @@ function CoffeePage({ myGroup }) {
           {/* Name */}
           <FL4>Your name</FL4>
           <SCard style={{ padding:'12px 14px' }}>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name..."
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter your first and last name"
               style={{ width:'100%', background:'transparent', border:'none', outline:'none', fontSize:16, color:C.text, fontFamily:'inherit', padding:0 }} />
           </SCard>
 
