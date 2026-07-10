@@ -465,6 +465,9 @@ function CardDeck({ day }) {
   const mid  = `rgb(${Math.round(rv*.58)},${Math.round(gv*.58)},${Math.round(bv*.58)})`
   const deep = `rgb(${Math.round(rv*.30)},${Math.round(gv*.30)},${Math.round(bv*.30)})`
 
+  const withA = (rgb, a) => rgb.replace('rgb(', 'rgba(').replace(')', `,${a})`)
+  const accA  = a => `rgba(${rv},${gv},${bv},${a})`
+
   const W = 238, H = 278
   const base = {
     flexShrink:0, width:W, height:H, borderRadius:22,
@@ -501,29 +504,32 @@ function CardDeck({ day }) {
         paddingLeft:16, paddingRight:16, paddingBottom:4, scrollPaddingLeft:16,
       }}>
 
-        {/* ── Card 1: Bible Point ── */}
-        <Tap style={{ ...base, background:`linear-gradient(155deg,${deep},${hex})`, color:'#fff' }}
-          onClick={() => setBible(true)}>
-          <Leaf t={-14} r={-10} rot={45} s={78} />
-          <p style={{ margin:'0 0 3px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Day {day.n} · Bible Point</p>
-          <div style={{ display:'flex',alignItems:'center',gap:9,marginBottom:12 }}>
-            <img src={BUDDY_IMGS[day.n]} alt={day.buddy} style={{ width:46,height:46,objectFit:'contain',flexShrink:0 }} />
-            <div>
-              <p style={{ margin:'0 0 1px',fontSize:8,fontWeight:600,color:'rgba(255,255,255,0.48)' }}>Today's buddy</p>
-              <p style={{ margin:0,fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.88)' }}>{day.buddy}</p>
+        {/* ── Card 1: Bible Point — warm/vivid ── */}
+        <Tap style={{ ...base, color:'#fff' }} onClick={() => setBible(true)}>
+          <div style={{ position:'absolute',inset:0,borderRadius:22,backgroundImage:'url(/bible-point-image.jpg)',backgroundSize:'cover',backgroundPosition:'center',filter:'saturate(1.2) brightness(0.88)',zIndex:0 }} />
+          <div style={{ position:'absolute',inset:0,borderRadius:22,background:'linear-gradient(160deg,rgba(0,0,0,0.28) 0%,rgba(0,0,0,0.52) 100%)',zIndex:1 }} />
+          <Leaf t={-14} r={-10} rot={45} s={78} op={0.22} />
+          <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',flex:1 }}>
+            <p style={{ margin:'0 0 3px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Day {day.n} · Bible Point</p>
+            <div style={{ display:'flex',alignItems:'center',gap:9,marginBottom:12 }}>
+              <img src={BUDDY_IMGS[day.n]} alt={day.buddy} style={{ width:46,height:46,objectFit:'contain',flexShrink:0 }} />
+              <div>
+                <p style={{ margin:'0 0 1px',fontSize:8,fontWeight:600,color:'rgba(255,255,255,0.48)' }}>Today's buddy</p>
+                <p style={{ margin:0,fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.88)' }}>{day.buddy}</p>
+              </div>
             </div>
-          </div>
-          <p style={{ margin:0,fontSize:21,fontWeight:800,lineHeight:1.2,flex:1,color:'#fff' }}>{day.point}</p>
-          <div style={{ background:'rgba(255,255,255,0.14)',borderRadius:12,height:46,
-            display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',marginTop:12 }}>
-            {!bibleRevealed
-              ? <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.62)' }}>Tap · see the response</span>
-              : <span key="wow" style={{ fontSize:16,fontWeight:800,color:'#fff',animation:'wowReveal 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}>"Wow, God!" 🙌</span>
-            }
+            <p style={{ margin:0,fontSize:21,fontWeight:800,lineHeight:1.2,flex:1,color:'#fff' }}>{day.point}</p>
+            <div style={{ background:'rgba(255,255,255,0.14)',borderRadius:12,height:46,
+              display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',marginTop:12 }}>
+              {!bibleRevealed
+                ? <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.62)' }}>Tap · see the response</span>
+                : <span key="wow" style={{ fontSize:16,fontWeight:800,color:'#fff',animation:'wowReveal 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}>"Wow, God!" 🙌</span>
+              }
+            </div>
           </div>
         </Tap>
 
-        {/* ── Card 2: Memory Verse (3D flip) ── */}
+        {/* ── Card 2: Memory Verse (3D flip) — cool/blue ── */}
         <div onClick={() => setVerse(v => !v)}
           style={{ flexShrink:0,width:W,height:H,borderRadius:22,scrollSnapAlign:'start',cursor:'pointer',perspective:'1000px' }}>
           <div style={{
@@ -532,22 +538,26 @@ function CardDeck({ day }) {
             transition:'transform 0.55s cubic-bezier(0.4,0,0.2,1)',
             transform: verseFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
           }}>
-            {/* Front */}
+            {/* Front — camp photo, cool-toned */}
             <div style={{ position:'absolute',inset:0,borderRadius:22,
               backfaceVisibility:'hidden',WebkitBackfaceVisibility:'hidden',
-              background:`linear-gradient(155deg,${mid},${dark})`,
-              color:'#fff',display:'flex',flexDirection:'column',padding:'18px 18px 16px',overflow:'hidden' }}>
-              <svg viewBox="0 0 60 60" style={{ position:'absolute',top:-10,right:-8,width:72,height:72,opacity:.10,pointerEvents:'none' }}>
+              overflow:'hidden',
+              color:'#fff',display:'flex',flexDirection:'column',padding:'18px 18px 16px' }}>
+              <div style={{ position:'absolute',inset:0,backgroundImage:'url(/memory-verse-image.jpg)',backgroundSize:'cover',backgroundPosition:'center',filter:'hue-rotate(195deg) saturate(0.85) brightness(0.85)',zIndex:0 }} />
+              <div style={{ position:'absolute',inset:0,background:'linear-gradient(160deg,rgba(0,0,0,0.25) 0%,rgba(0,0,0,0.50) 100%)',zIndex:1 }} />
+              <svg viewBox="0 0 60 60" style={{ position:'absolute',top:-10,right:-8,width:72,height:72,opacity:.18,pointerEvents:'none',zIndex:2 }}>
                 <path d="M5 55 Q30 5 55 5 Q45 35 5 55Z" fill="white" transform="rotate(30 30 30)"/>
               </svg>
-              <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Memory Verse</p>
-              <p style={{ margin:'0 0 10px',fontSize:22,fontWeight:800,color:'#fff' }}>{day.verseRef}</p>
-              <p style={{ margin:0,fontSize:13,color:'rgba(255,255,255,0.36)',lineHeight:1.6,flex:1,fontStyle:'italic',filter:'blur(3.5px)',userSelect:'none' }}>{day.verseText}</p>
-              <div style={{ background:'rgba(255,255,255,0.16)',borderRadius:10,padding:'9px',textAlign:'center',marginTop:10 }}>
-                <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.82)' }}>↻  Flip to reveal</span>
+              <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',flex:1 }}>
+                <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Memory Verse</p>
+                <p style={{ margin:'0 0 10px',fontSize:22,fontWeight:800,color:'#fff' }}>{day.verseRef}</p>
+                <p style={{ margin:0,fontSize:13,color:'rgba(255,255,255,0.36)',lineHeight:1.6,flex:1,fontStyle:'italic',filter:'blur(3.5px)',userSelect:'none' }}>{day.verseText}</p>
+                <div style={{ background:'rgba(255,255,255,0.16)',borderRadius:10,padding:'9px',textAlign:'center',marginTop:10 }}>
+                  <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.82)' }}>↻  Flip to reveal</span>
+                </div>
               </div>
             </div>
-            {/* Back */}
+            {/* Back — clean surface for reading */}
             <div style={{ position:'absolute',inset:0,borderRadius:22,
               backfaceVisibility:'hidden',WebkitBackfaceVisibility:'hidden',
               transform:'rotateY(180deg)',
@@ -560,65 +570,76 @@ function CardDeck({ day }) {
           </div>
         </div>
 
-        {/* ── Card 3: Crew Joke ── */}
-        <Tap style={{ ...base,background:`linear-gradient(155deg,${deep},${mid})`,color:'#fff' }}
-          onClick={() => !jokeRevealed && setJokeRev(true)}>
-          <Leaf b={-12} r={-10} rot={-20} s={74} />
-          <p style={{ margin:'0 0 8px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Crew Joke 😂</p>
-          <p style={{ margin:0,fontSize:15,fontWeight:700,lineHeight:1.5,flex:1,color:'#fff' }}>{joke.q}</p>
-          <div style={{ background:'rgba(255,255,255,0.14)',borderRadius:12,height:54,
-            position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center' }}>
-            {!jokeRevealed && <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.62)',position:'relative',zIndex:1 }}>Tap to reveal punchline</span>}
-            <div style={{
-              position:'absolute',inset:0,background:'rgba(255,255,255,0.20)',
-              display:'flex',alignItems:'center',justifyContent:'center',padding:'0 12px',textAlign:'center',
-              transform: jokeRevealed ? 'translateY(0)' : 'translateY(110%)',
-              transition:'transform 0.42s cubic-bezier(0.34,1.56,0.64,1)',
-            }}>
-              <span style={{ fontSize:14,fontWeight:800,color:'#fff' }}>{joke.a}</span>
+        {/* ── Card 3: Crew Joke — warm/energetic ── */}
+        <Tap style={{ ...base, color:'#fff' }} onClick={() => !jokeRevealed && setJokeRev(true)}>
+          <div style={{ position:'absolute',inset:0,borderRadius:22,backgroundImage:'url(/crew-joke-image.jpg)',backgroundSize:'cover',backgroundPosition:'center',filter:'hue-rotate(-18deg) saturate(1.35) brightness(0.90)',zIndex:0 }} />
+          <div style={{ position:'absolute',inset:0,borderRadius:22,background:'linear-gradient(160deg,rgba(0,0,0,0.22) 0%,rgba(0,0,0,0.50) 100%)',zIndex:1 }} />
+          <Leaf b={-12} r={-10} rot={-20} s={74} op={0.22} />
+          <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',flex:1 }}>
+            <p style={{ margin:'0 0 8px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Crew Joke 😂</p>
+            <p style={{ margin:0,fontSize:15,fontWeight:700,lineHeight:1.5,flex:1,color:'#fff' }}>{joke.q}</p>
+            <div style={{ background:'rgba(255,255,255,0.14)',borderRadius:12,height:54,
+              position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center' }}>
+              {!jokeRevealed && <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.62)',position:'relative',zIndex:1 }}>Tap to reveal punchline</span>}
+              <div style={{
+                position:'absolute',inset:0,background:'rgba(255,255,255,0.20)',
+                display:'flex',alignItems:'center',justifyContent:'center',padding:'0 12px',textAlign:'center',
+                transform: jokeRevealed ? 'translateY(0)' : 'translateY(110%)',
+                transition:'transform 0.42s cubic-bezier(0.34,1.56,0.64,1)',
+              }}>
+                <span style={{ fontSize:14,fontWeight:800,color:'#fff' }}>{joke.a}</span>
+              </div>
             </div>
+            {jokeRevealed && (
+              <Tap onClick={e => { e.stopPropagation(); setJokeIdx(i=>(i+1)%JOKES.length); setJokeRev(false) }}
+                style={{ marginTop:8,background:'rgba(255,255,255,0.14)',borderRadius:10,padding:'8px',textAlign:'center' }}>
+                <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.82)' }}>↻ Next joke · {jokeIdx+1}/{JOKES.length}</span>
+              </Tap>
+            )}
           </div>
-          {jokeRevealed && (
-            <Tap onClick={e => { e.stopPropagation(); setJokeIdx(i=>(i+1)%JOKES.length); setJokeRev(false) }}
-              style={{ marginTop:8,background:'rgba(255,255,255,0.14)',borderRadius:10,padding:'8px',textAlign:'center' }}>
-              <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.82)' }}>↻ Next joke · {jokeIdx+1}/{JOKES.length}</span>
-            </Tap>
-          )}
         </Tap>
 
-        {/* ── Card 4: Icebreaker ── */}
-        <div style={{ ...base,background:C.surface,border:`2.5px solid ${hex}`,cursor:'default' }}>
-          <svg viewBox="0 0 60 60" style={{ position:'absolute',bottom:-12,right:-12,width:72,height:72,opacity:.07,pointerEvents:'none' }}>
-            <path d="M5 55 Q30 5 55 5 Q45 35 5 55Z" fill={hex}/>
+        {/* ── Card 4: Icebreaker — desaturated/moody ── */}
+        <div style={{ ...base, cursor:'default', color:'#fff' }}>
+          <div style={{ position:'absolute',inset:0,borderRadius:22,backgroundImage:'url(/crew-icebreaker-image.jpg)',backgroundSize:'cover',backgroundPosition:'center',filter:'saturate(0.45) brightness(0.82) contrast(1.08)',zIndex:0 }} />
+          <div style={{ position:'absolute',inset:0,borderRadius:22,background:'linear-gradient(160deg,rgba(0,0,0,0.30) 0%,rgba(0,0,0,0.55) 100%)',zIndex:1 }} />
+          <svg viewBox="0 0 60 60" style={{ position:'absolute',bottom:-12,right:-12,width:72,height:72,opacity:.18,pointerEvents:'none',zIndex:2 }}>
+            <path d="M5 55 Q30 5 55 5 Q45 35 5 55Z" fill="white"/>
           </svg>
-          <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:hex }}>Crew Icebreaker ❓</p>
-          <p style={{ margin:0,fontSize:15,fontWeight:700,lineHeight:1.6,flex:1,color:C.text,
-            opacity:iceOut?0:1, transform:iceOut?'scale(0.94) rotate(-1.5deg)':'scale(1)',
-            transition:'opacity 0.22s, transform 0.22s' }}>
-            "{ICEBREAKERS[iceIdx]}"
-          </p>
-          <Tap onClick={spinIce} style={{ background:`rgba(${rv},${gv},${bv},0.10)`,borderRadius:10,padding:'10px',textAlign:'center',marginTop:10 }}>
-            <span style={{ fontSize:12,fontWeight:700,color:hex }}>🎲 New question · {iceIdx+1}/{ICEBREAKERS.length}</span>
-          </Tap>
-        </div>
-
-        {/* ── Card 5: Leader Tip ── */}
-        <div style={{ ...base,background:`linear-gradient(155deg,${dark},${hex})`,color:'#fff',cursor:'default' }}>
-          <Leaf t={-10} l={-10} rot={120} s={66} />
-          <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Leader Tip 🌿</p>
-          <p style={{ margin:'0 0 8px',fontSize:28 }}>{TIPS[tipIdx].icon}</p>
-          <p style={{ margin:0,fontSize:14,fontWeight:600,lineHeight:1.6,flex:1,color:'#fff' }}>{TIPS[tipIdx].tip}</p>
-          <div style={{ display:'flex',gap:8,marginTop:10 }}>
-            <Tap onClick={() => setTipIdx(i=>(i-1+TIPS.length)%TIPS.length)}
-              style={{ flex:1,background:'rgba(255,255,255,0.16)',borderRadius:10,padding:'8px',textAlign:'center' }}>
-              <span style={{ fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.88)' }}>‹ Prev</span>
-            </Tap>
-            <Tap onClick={() => setTipIdx(i=>(i+1)%TIPS.length)}
-              style={{ flex:1,background:'rgba(255,255,255,0.16)',borderRadius:10,padding:'8px',textAlign:'center' }}>
-              <span style={{ fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.88)' }}>Next ›</span>
+          <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',flex:1 }}>
+            <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Crew Icebreaker ❓</p>
+            <p style={{ margin:0,fontSize:15,fontWeight:700,lineHeight:1.6,flex:1,color:'#fff',
+              opacity:iceOut?0:1, transform:iceOut?'scale(0.94) rotate(-1.5deg)':'scale(1)',
+              transition:'opacity 0.22s, transform 0.22s' }}>
+              "{ICEBREAKERS[iceIdx]}"
+            </p>
+            <Tap onClick={spinIce} style={{ background:'rgba(255,255,255,0.16)',borderRadius:10,padding:'10px',textAlign:'center',marginTop:10 }}>
+              <span style={{ fontSize:12,fontWeight:700,color:'#fff' }}>🎲 New question · {iceIdx+1}/{ICEBREAKERS.length}</span>
             </Tap>
           </div>
-          <p style={{ margin:'6px 0 0',textAlign:'center',fontSize:10,color:'rgba(255,255,255,0.48)' }}>Tip {tipIdx+1} of {TIPS.length}</p>
+        </div>
+
+        {/* ── Card 5: Leader Tip — green/nature ── */}
+        <div style={{ ...base, color:'#fff', cursor:'default' }}>
+          <div style={{ position:'absolute',inset:0,borderRadius:22,backgroundImage:'url(/leader-tip-image.jpg)',backgroundSize:'cover',backgroundPosition:'center',filter:'hue-rotate(82deg) saturate(1.1) brightness(0.86)',zIndex:0 }} />
+          <div style={{ position:'absolute',inset:0,borderRadius:22,background:'linear-gradient(160deg,rgba(0,0,0,0.26) 0%,rgba(0,0,0,0.52) 100%)',zIndex:1 }} />
+          <Leaf t={-10} l={-10} rot={120} s={66} op={0.22} />
+          <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',flex:1 }}>
+            <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Leader Tip 🌿</p>
+            <p style={{ margin:'0 0 8px',fontSize:28 }}>{TIPS[tipIdx].icon}</p>
+            <p style={{ margin:0,fontSize:14,fontWeight:600,lineHeight:1.6,flex:1,color:'#fff' }}>{TIPS[tipIdx].tip}</p>
+            <div style={{ display:'flex',gap:8,marginTop:10 }}>
+              <Tap onClick={() => setTipIdx(i=>(i-1+TIPS.length)%TIPS.length)}
+                style={{ flex:1,background:'rgba(255,255,255,0.16)',borderRadius:10,padding:'8px',textAlign:'center' }}>
+                <span style={{ fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.88)' }}>‹ Prev</span>
+              </Tap>
+              <Tap onClick={() => setTipIdx(i=>(i+1)%TIPS.length)}
+                style={{ flex:1,background:'rgba(255,255,255,0.16)',borderRadius:10,padding:'8px',textAlign:'center' }}>
+                <span style={{ fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.88)' }}>Next ›</span>
+              </Tap>
+            </div>
+            <p style={{ margin:'6px 0 0',textAlign:'center',fontSize:10,color:'rgba(255,255,255,0.48)' }}>Tip {tipIdx+1} of {TIPS.length}</p>
+          </div>
         </div>
 
         {/* trailing pad so last card can scroll into view */}
