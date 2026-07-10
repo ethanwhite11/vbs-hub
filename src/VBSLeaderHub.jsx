@@ -754,6 +754,154 @@ function CardDeck({ day }) {
   )
 }
 
+// ─── HOME SCREEN PROMPT + GUIDE ───────────────────────────────────────────────
+function useHomeScreenState() {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone
+  const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+  const isAndroid    = /Android/.test(navigator.userAgent)
+  const isSafari     = isIOS && /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|OPiOS/.test(navigator.userAgent)
+  const iosNotSafari = isIOS && !isSafari
+  return { isStandalone, isIOS, isAndroid, isSafari, iosNotSafari }
+}
+
+function HomeScreenGuide({ onDone, deferredPrompt, setDeferredPrompt }) {
+  const C = useC()
+  const { isAndroid, isSafari, iosNotSafari } = useHomeScreenState()
+  const [step, setStep] = useState(0)
+
+  const androidNative = isAndroid && !!deferredPrompt
+
+  const steps = (() => {
+    if (androidNative) return [
+      { emoji:'⬇', title:'Install Leader Hub', body:"Your browser is ready to install it. Tap below and it'll open instantly like an app — no browser bar, no URL.", action:true },
+      { emoji:'✅', title:"You're all set!", body:'Leader Hub is now on your home screen. Open it from there all week for the fastest access.', done:true },
+    ]
+    if (isAndroid) return [
+      { emoji:'⋮', title:'Open the menu', body:'Tap the three-dot menu icon at the top right of Chrome.' },
+      { emoji:'➕', title:'Add to Home Screen', body:'Tap "Add to Home Screen" or "Install app" from the menu.' },
+      { emoji:'✅', title:'Confirm the install', body:'Tap Install when prompted. Leader Hub will appear on your home screen.' },
+    ]
+    if (isSafari) return [
+      { emoji:'□↑', title:'Tap the Share button', body:'Find the Share icon at the bottom of Safari — it looks like a box with an arrow pointing up.' },
+      { emoji:'➕', title:'Add to Home Screen', body:'Scroll down in the share sheet and tap "Add to Home Screen".' },
+      { emoji:'✅', title:'Tap Add', body:'Hit Add in the top right corner. Leader Hub will appear on your home screen like a native app.' },
+    ]
+    if (iosNotSafari) return [
+      { emoji:'🧭', title:'Switch to Safari', body:'This only works in Safari. Copy the URL from your address bar, open Safari, and paste it there.' },
+      { emoji:'□↑', title:'Tap the Share button', body:'Find the Share icon at the bottom of Safari — it looks like a box with an arrow pointing up.' },
+      { emoji:'➕', title:'Add to Home Screen', body:'Scroll down and tap "Add to Home Screen", then tap Add in the top right.' },
+    ]
+    // desktop
+    return [
+      { emoji:'📱', title:'Open on your phone', body:'For the best experience, visit this page in Safari (iPhone) or Chrome (Android) on your phone.' },
+      { emoji:'□↑', title:'Add to your home screen', body:'On iPhone: tap Share → "Add to Home Screen". On Android: tap ⋮ → "Add to Home Screen".' },
+    ]
+  })()
+
+  const cur     = steps[step]
+  const isLast  = step === steps.length - 1
+  const total   = steps.length
+
+  const handleMain = async () => {
+    if (cur.done) { onDone(); return }
+    if (cur.action && deferredPrompt) {
+      deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      setDeferredPrompt(null)
+      if (outcome === 'accepted') { setStep(s => s + 1); return }
+    }
+    if (isLast) { onDone(); return }
+    setStep(s => s + 1)
+  }
+
+  return (
+    <div onClick={onDone} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:300, display:'flex', alignItems:'flex-end', backdropFilter:'blur(3px)', WebkitBackdropFilter:'blur(3px)' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:C.surface, width:'100%', maxWidth:430, margin:'0 auto', borderRadius:'24px 24px 0 0', padding:`28px 22px calc(32px + env(safe-area-inset-bottom,0px))`, animation:'fadeUp 0.3s ease both', border:`1px solid ${C.border}` }}>
+
+        {/* Step counter */}
+        <div style={{ display:'flex', justifyContent:'center', gap:5, marginBottom:22 }}>
+          {steps.map((_, i) => (
+            <div key={i} style={{ width:i===step?18:6, height:6, borderRadius:99, background:i<=step?C.accent:C.border, transition:'all 0.3s ease' }} />
+          ))}
+        </div>
+
+        <div style={{ fontSize:48, textAlign:'center', marginBottom:14, lineHeight:1 }}>{cur.emoji}</div>
+        <h2 style={{ margin:'0 0 10px', fontSize:22, fontWeight:700, color:C.text, textAlign:'center' }}>{cur.title}</h2>
+        <p style={{ margin:'0 0 24px', fontSize:15, color:C.muted, textAlign:'center', lineHeight:1.65 }}>{cur.body}</p>
+
+        <div style={{ display:'flex', gap:8 }}>
+          {step > 0 && !cur.done && (
+            <Tap onClick={() => setStep(s => s - 1)} style={{ padding:'13px 18px', borderRadius:12, border:`1px solid ${C.border}`, textAlign:'center' }}>
+              <span style={{ fontSize:14, color:C.muted }}>Back</span>
+            </Tap>
+          )}
+          <Tap onClick={handleMain} style={{ flex:1, padding:'14px', borderRadius:12, background:C.accent, textAlign:'center' }}>
+            <span style={{ fontSize:15, fontWeight:700, color:'#fff' }}>
+              {cur.done ? 'Done 🎉' : cur.action ? '⬇ Install Now' : isLast ? 'All done ✓' : 'Next →'}
+            </span>
+          </Tap>
+        </div>
+
+        {!cur.done && (
+          <Tap onClick={onDone} style={{ marginTop:12, textAlign:'center' }}>
+            <span style={{ fontSize:13, color:C.mutedLt }}>Close</span>
+          </Tap>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function HomeScreenBanner() {
+  const C = useC()
+  const [dismissed, setDismissed] = useState(() => {
+    try { return !!localStorage.getItem('vbsHomeScreen') } catch { return false }
+  })
+  const [guideOpen, setGuideOpen]       = useState(false)
+  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const { isStandalone }                = useHomeScreenState()
+
+  useEffect(() => {
+    const handler = e => { e.preventDefault(); setDeferredPrompt(e) }
+    window.addEventListener('beforeinstallprompt', handler)
+    window.addEventListener('appinstalled', dismiss)
+    return () => { window.removeEventListener('beforeinstallprompt', handler); window.removeEventListener('appinstalled', dismiss) }
+  }, [])
+
+  function dismiss() {
+    try { localStorage.setItem('vbsHomeScreen', 'done') } catch {}
+    setDismissed(true)
+    setGuideOpen(false)
+  }
+
+  if (isStandalone || dismissed) return null
+
+  return (
+    <>
+      {/* Compact strip */}
+      <Tap onClick={() => setGuideOpen(true)} style={{ margin:'12px 16px 0', background:C.accentBg, border:`1.5px solid ${C.accentBdr}`, borderRadius:14, padding:'11px 14px', display:'flex', alignItems:'center', gap:10 }}>
+        <span style={{ fontSize:20, flexShrink:0 }}>📱</span>
+        <div style={{ flex:1, minWidth:0 }}>
+          <p style={{ margin:0, fontSize:13, fontWeight:700, color:C.accent }}>Add to Home Screen</p>
+          <p style={{ margin:0, fontSize:11, color:C.accent, opacity:0.7 }}>Tap for step-by-step instructions</p>
+        </div>
+        <span style={{ fontSize:13, color:C.accent, fontWeight:700, flexShrink:0 }}>→</span>
+        <Tap onClick={e => { e.stopPropagation(); dismiss() }} style={{ padding:'4px 6px', marginRight:-4, flexShrink:0 }}>
+          <span style={{ fontSize:14, color:C.accent, opacity:0.5, fontWeight:600 }}>✕</span>
+        </Tap>
+      </Tap>
+
+      {guideOpen && (
+        <HomeScreenGuide
+          onDone={dismiss}
+          deferredPrompt={deferredPrompt}
+          setDeferredPrompt={setDeferredPrompt}
+        />
+      )}
+    </>
+  )
+}
+
 // ─── TODAY PAGE ───────────────────────────────────────────────────────────────
 function TodayPage({ myGroup, live, now, onChangeGroup, onHelp, preschoolSub, onToggleSub }) {
   const C = useC()
@@ -774,6 +922,7 @@ function TodayPage({ myGroup, live, now, onChangeGroup, onHelp, preschoolSub, on
           </Tap>
         </div>
       )}
+      <HomeScreenBanner />
       <div style={{ padding:'16px 0 calc(92px + env(safe-area-inset-bottom,0px))' }}>
         <p style={{ margin:'0 0 10px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>Today</p>
         <CardDeck day={day} />
