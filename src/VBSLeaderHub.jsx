@@ -384,18 +384,22 @@ function OnboardingModal({ onDone }) {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   const isAndroid = /Android/.test(navigator.userAgent)
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone
+  const iosVersionMatch = navigator.userAgent.match(/OS (\d+)[_ ]/)
+  const isIOS26Plus = isIOS && iosVersionMatch ? parseInt(iosVersionMatch[1]) >= 26 : false
 
   const homeBody = isStandalone
     ? "You're already running from your home screen — you're all set! 🎉"
+    : isIOS && isIOS26Plus
+    ? 'In Safari, look for the ••• and Share (↑) buttons in the bottom toolbar. Tap the Share button, then tap "Add to Home Screen".'
     : isIOS
     ? 'Tap the Share button at the bottom of Safari (the box with an arrow ↑), then tap "Add to Home Screen". It opens instantly like an app.'
     : isAndroid
-    ? 'Tap the three-dot menu at the top right of Chrome, then tap "Add to Home Screen" or "Install app".'
+    ? 'Tap the three-dot menu (⋮) at the top right of your browser, then look for "Add to Home Screen" or "Install app".'
     : 'In your browser menu, look for "Add to Home Screen" or "Install app" to save Leader Hub to your home screen.'
 
   return (
     <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:300,display:'flex',alignItems:'flex-end',backdropFilter:'blur(3px)',WebkitBackdropFilter:'blur(3px)' }}>
-      <div style={{ background:C.surface,width:'100%',maxWidth:430,margin:'0 auto',borderRadius:'24px 24px 0 0',padding:`28px 22px calc(32px + env(safe-area-inset-bottom,0px))`,animation:'fadeUp 0.3s ease both',border:`1px solid ${C.border}` }}>
+      <div style={{ background:C.surface,width:'100%',maxWidth:430,margin:'0 auto',borderRadius:'24px 24px 0 0',padding:`28px 22px calc(32px + env(safe-area-inset-bottom,0px))`,animation:'fadeUp 0.3s ease both',border:`1px solid ${C.border}`,maxHeight:'calc(90vh - env(safe-area-inset-top,0px))',overflowY:'auto' }}>
         <div style={{ fontSize:52,textAlign:'center',marginBottom:14,lineHeight:1 }}>{cur.emoji}</div>
         <h2 style={{ margin:'0 0 10px',fontSize:22,fontWeight:700,color:C.text,textAlign:'center' }}>{cur.title}</h2>
         <p style={{ margin:'0 0 20px',fontSize:15,color:C.muted,textAlign:'center',lineHeight:1.65 }}>
@@ -789,12 +793,15 @@ function useHomeScreenState() {
   const isAndroid    = /Android/.test(navigator.userAgent)
   const isSafari     = isIOS && /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|OPiOS/.test(navigator.userAgent)
   const iosNotSafari = isIOS && !isSafari
-  return { isStandalone, isIOS, isAndroid, isSafari, iosNotSafari }
+  const iosVersionMatch = navigator.userAgent.match(/OS (\d+)[_ ]/)
+  const iosVersion   = iosVersionMatch ? parseInt(iosVersionMatch[1]) : 0
+  const isIOS26Plus  = isIOS && iosVersion >= 26
+  return { isStandalone, isIOS, isAndroid, isSafari, iosNotSafari, isIOS26Plus }
 }
 
 function HomeScreenGuide({ onDone, deferredPrompt, setDeferredPrompt }) {
   const C = useC()
-  const { isAndroid, isSafari, iosNotSafari } = useHomeScreenState()
+  const { isAndroid, isSafari, iosNotSafari, isIOS26Plus } = useHomeScreenState()
   const [step, setStep] = useState(0)
 
   const androidNative = isAndroid && !!deferredPrompt
@@ -805,9 +812,15 @@ function HomeScreenGuide({ onDone, deferredPrompt, setDeferredPrompt }) {
       { emoji:'✅', title:"You're all set!", body:'Leader Hub is now on your home screen. Open it from there all week for the fastest access.', done:true },
     ]
     if (isAndroid) return [
-      { emoji:'⋮', title:'Open the menu', body:'Tap the three-dot menu icon at the top right of Chrome.' },
-      { emoji:'➕', title:'Add to Home Screen', body:'Tap "Add to Home Screen" or "Install app" from the menu.' },
-      { emoji:'✅', title:'Confirm the install', body:'Tap Install when prompted. Leader Hub will appear on your home screen.' },
+      { emoji:'⋮', title:'Open the browser menu', body:'Tap the three-dot menu (⋮) at the top right of Chrome, or the menu icon in your browser.' },
+      { emoji:'➕', title:'Find "Add to Home Screen"', body:'Look for "Add to Home Screen" or "Install app" in the menu and tap it. The exact wording depends on your browser.' },
+      { emoji:'✅', title:'Confirm', body:'Tap "Add" or "Install" when prompted. Leader Hub will appear on your home screen.' },
+    ]
+    if (isSafari && isIOS26Plus) return [
+      { emoji:'•••', title:'Find the toolbar', body:'In Safari, look at the bottom toolbar. You\'ll see a ••• button and a Share button (box with arrow ↑) side by side.' },
+      { emoji:'□↑', title:'Tap the Share button', body:'Tap the Share icon — the box with an arrow pointing up — not the ••• button.' },
+      { emoji:'➕', title:'Add to Home Screen', body:'Scroll down in the share sheet and tap "Add to Home Screen".' },
+      { emoji:'✅', title:'Tap Add', body:'Tap Add in the top right corner. Leader Hub will appear on your home screen like a native app.' },
     ]
     if (isSafari) return [
       { emoji:'□↑', title:'Tap the Share button', body:'Find the Share icon at the bottom of Safari — it looks like a box with an arrow pointing up.' },
@@ -816,7 +829,7 @@ function HomeScreenGuide({ onDone, deferredPrompt, setDeferredPrompt }) {
     ]
     if (iosNotSafari) return [
       { emoji:'🧭', title:'Switch to Safari', body:'This only works in Safari. Copy the URL from your address bar, open Safari, and paste it there.' },
-      { emoji:'□↑', title:'Tap the Share button', body:'Find the Share icon at the bottom of Safari — it looks like a box with an arrow pointing up.' },
+      { emoji:'□↑', title:'Tap the Share button', body:'Find the Share icon in Safari\'s bottom toolbar — it looks like a box with an arrow pointing up.' },
       { emoji:'➕', title:'Add to Home Screen', body:'Scroll down and tap "Add to Home Screen", then tap Add in the top right.' },
     ]
     // desktop
