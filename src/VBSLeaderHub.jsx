@@ -82,6 +82,15 @@ const ROT = {
   orange: [{s:'Paradise Preschool',           l:'West Wing / Nursery'},{s:'Paradise Preschool',l:'West Wing / Nursery'},{s:'Paradise Preschool',l:'West Wing / Nursery'},{s:'Paradise Preschool',l:'West Wing / Nursery'},{s:'Paradise Preschool',l:'West Wing / Nursery'}],
 }
 
+const STATION_EMOJI = {
+  'Rooted Bible Adventures':      '📖',
+  'Missions':                     '🌍',
+  'Treetop Treats / Imagination': '🎨',
+  'Wild Games':                   '🏃',
+  'Worship':                      '🙌',
+  'Paradise Preschool':           '🌴',
+}
+
 // ─── DAILY DATA ───────────────────────────────────────────────────────────────
 const DAYS = [
   { n:1,date:'2026-07-13',label:'Mon · July 13',point:'God is our creator.',passage:'Genesis 1',verseRef:'Psalm 103:22',verseText:'"Let everything he has created praise the Lord, for he has given the order."',buddy:'Tango',accentColor:'#F0B429',icebreaker:"What's the coolest thing God made that you've ever seen in nature?",reminders:['Introduce yourself to every kid in your group today','Help your crew come up with a name or cheer','Watch for God Sightings — share one of yours first to model it','Response to Bible Point: "Wow, God!" — model it before they echo it','Encourage every kid to write their first God Sighting'] },
@@ -597,84 +606,216 @@ function TodayPage({ myGroup, live, now, onViewSchedule, onChangeGroup }) {
 function SchedulePage({ myGroup, live, now, onChangeGroup }) {
   const C = useC()
   const g = myGroup ? GROUPS[myGroup] : null
-  const cur = now.getHours()*60+now.getMinutes()
+  const cur = now.getHours()*60 + now.getMinutes()
   const inVbs = ['live','before','after'].includes(live.status)
 
+  const curIdx    = live.status === 'live' ? live.slotIdx : -1
+  const pastCount = inVbs ? SLOTS.filter(s => cur > toMin(s.end)).length : 0
+  const filledPct = Math.min(100, ((pastCount + (curIdx >= 0 ? live.progress : 0)) / SLOTS.length) * 100)
+  const nextIdx   = curIdx >= 0 && curIdx < SLOTS.length - 1 ? curIdx + 1 : -1
+  const curSlot   = curIdx >= 0 ? SLOTS[curIdx] : null
+  const nextSlot  = nextIdx >= 0 ? SLOTS[nextIdx] : null
+  const laterList = curIdx >= 0 ? SLOTS.slice(nextIdx >= 0 ? nextIdx + 1 : curIdx + 1) : []
+  const laterBaseIdx = nextIdx >= 0 ? nextIdx + 1 : curIdx + 1
+
+  const dName = (slot, i) =>
+    slot.allGroups ? slot.label
+    : (myGroup && myGroup !== 'none') ? (getActivity(myGroup, i)?.s || 'Station Rotation')
+    : 'Station Rotation'
+
+  const dLoc = (slot, i) =>
+    slot.allGroups ? slot.location
+    : (myGroup && myGroup !== 'none') ? (getActivity(myGroup, i)?.l || null)
+    : null
+
+  const dEmoji = (slot, i) => {
+    if (!slot.isRotation) return slot.emoji
+    const act = (myGroup && myGroup !== 'none') ? getActivity(myGroup, i) : null
+    return (act && STATION_EMOJI[act.s]) || slot.emoji
+  }
+
+  const minsUntil = slot => Math.max(0, toMin(slot.start) - cur)
+
+  const showStrip = live.status === 'live' || live.status === 'after'
+  const GREEN = '#16a34a'
+  const GREEN_BG = 'rgba(22,163,74,0.10)'
+
+  const rowStyle = isLast => ({
+    display:'flex', alignItems:'center', gap:11, padding:'12px 14px',
+    borderBottom: isLast ? 'none' : `1px solid ${C.border}`
+  })
+
+  const renderRow = (slot, realIdx, isLast) => (
+    <div key={realIdx} style={rowStyle(isLast)}>
+      <div style={{ width:34, height:34, borderRadius:9, background:slot.allGroups ? GREEN_BG : C.accentBg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:17, flexShrink:0 }}>
+        {dEmoji(slot, realIdx)}
+      </div>
+      <div style={{ flex:1, minWidth:0 }}>
+        <p style={{ margin:'0 0 1px', fontSize:14, fontWeight:600, color:C.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+          {dName(slot, realIdx)}
+        </p>
+        <p style={{ margin:0, fontSize:11, color:C.muted }}>
+          {fmtTime(slot.start)}{dLoc(slot, realIdx) ? ` · ${dLoc(slot, realIdx)}` : ''}
+          {slot.allGroups && <span style={{ color:GREEN, fontWeight:600 }}> · All Groups</span>}
+        </p>
+      </div>
+    </div>
+  )
+
   return (
-    <div>
+    <div style={{ animation:'tabFade 0.3s ease both' }}>
+
+      {/* Header */}
       <div style={{ padding:'calc(22px + env(safe-area-inset-top,0px)) 16px 14px' }}>
-        <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:4 }}>
-          <h2 style={{ margin:0,fontSize:28,fontWeight:700,color:C.text }}>Schedule</h2>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+          <h2 style={{ margin:0, fontSize:28, fontWeight:700, color:C.text }}>Schedule</h2>
           {myGroup && (
-            <Tap onClick={onChangeGroup} style={{ background:g&&myGroup!=='none'?g.bg:'rgba(0,0,0,0.05)',border:`1px solid ${g&&myGroup!=='none'?g.color+'50':C.border}`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:6 }}>
-              {g && myGroup !== 'none' && <div style={{ width:8,height:8,borderRadius:'50%',background:g.color }} />}
-              <span style={{ fontSize:11,fontWeight:700,color:g&&myGroup!=='none'?g.color:C.muted }}>{g&&myGroup!=='none'?g.label.split(' ')[0]:'Staff'}</span>
+            <Tap onClick={onChangeGroup} style={{ background:g&&myGroup!=='none'?g.bg:'rgba(0,0,0,0.05)', border:`1px solid ${g&&myGroup!=='none'?g.color+'50':C.border}`, borderRadius:20, padding:'5px 12px', display:'flex', alignItems:'center', gap:6 }}>
+              {g && myGroup !== 'none' && <div style={{ width:8, height:8, borderRadius:'50%', background:g.color }} />}
+              <span style={{ fontSize:11, fontWeight:700, color:g&&myGroup!=='none'?g.color:C.muted }}>
+                {g&&myGroup!=='none' ? g.label.split(' ')[0] : 'Staff'}
+              </span>
             </Tap>
           )}
         </div>
-        <p style={{ margin:0,fontSize:12,color:C.muted }}>July 13–17 · 9:00 AM – 12:00 PM daily</p>
+        <p style={{ margin:0, fontSize:12, color:C.muted }}>July 13–17 · 9:00 AM – 12:00 PM daily</p>
       </div>
 
       <div style={{ padding:'0 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
-        {SLOTS.map((slot,i) => {
-          const e = toMin(slot.end)
-          const isCur = live.status==='live' && live.slotIdx===i
-          const isPast = inVbs && cur>e
-          const myAct = myGroup ? getActivity(myGroup,i) : null
-          const displayName = slot.allGroups ? slot.label : (myAct ? myAct.s : 'Station Rotation')
-          const displayLoc  = slot.allGroups ? slot.location : myAct?.l
 
-          // Current slot — dominant full-color card
-          if (isCur) return (
-            <div key={i} style={{ background:makeGradient(C.accent),borderRadius:16,padding:'18px 20px',marginBottom:8 }}>
-              <div style={{ display:'flex',alignItems:'center',gap:6,marginBottom:12 }}>
-                <div style={{ width:6,height:6,borderRadius:'50%',background:'rgba(255,255,255,0.85)',animation:'livePulse 2s ease infinite' }} />
-                <span style={{ fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.8)',letterSpacing:'.08em',textTransform:'uppercase' }}>
-                  Now · {fmtTime(slot.start)} – {fmtTime(slot.end)}
-                </span>
-              </div>
-              <p style={{ margin:'0 0 4px',fontSize:28,fontWeight:800,color:'#fff',lineHeight:1.1 }}>{displayName}</p>
-              {displayLoc && <p style={{ margin:'0 0 16px',fontSize:13,color:'rgba(255,255,255,0.82)' }}>📍 {displayLoc}</p>}
-              <div style={{ height:3,background:'rgba(255,255,255,0.25)',borderRadius:99,overflow:'hidden',marginBottom:8 }}>
-                <div style={{ height:'100%',width:`${Math.min(100,Math.max(0,live.progress*100))}%`,background:'#fff',borderRadius:99,transition:'width 30s linear' }} />
-              </div>
-              <span style={{ fontSize:12,color:'rgba(255,255,255,0.85)',fontWeight:600 }}>{live.minLeft} min left</span>
-            </div>
-          )
+        {/* Journey Strip */}
+        {showStrip && (
+          <div style={{ background:C.surface, borderRadius:14, padding:'13px 14px 15px', marginBottom:10, border:`1px solid ${C.border}` }}>
+            <p style={{ margin:'0 0 14px', fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:C.mutedLt }}>Your morning</p>
 
-          // Past slots — single compact faded row
-          if (isPast) return (
-            <div key={i} style={{ display:'flex',alignItems:'center',gap:10,padding:'7px 4px',opacity:0.3,marginBottom:2 }}>
-              <p style={{ margin:0,fontSize:11,color:C.muted,whiteSpace:'nowrap',minWidth:58,flexShrink:0 }}>{fmtTime(slot.start)}</p>
-              <div style={{ width:1,height:14,background:C.border,flexShrink:0 }} />
-              <p style={{ margin:0,fontSize:13,color:C.text }}>{displayName}</p>
-            </div>
-          )
+            <div style={{ position:'relative', height:44, display:'flex', alignItems:'center' }}>
+              {/* Background track */}
+              <div style={{ position:'absolute', top:'50%', left:4, right:4, height:2, background:C.border, transform:'translateY(-50%)', borderRadius:1 }} />
+              {/* Filled track */}
+              {filledPct > 0 && (
+                <div style={{ position:'absolute', top:'50%', left:4, width:`calc(${filledPct / 100} * (100% - 8px))`, height:2, background:C.accent, transform:'translateY(-50%)', borderRadius:1 }} />
+              )}
 
-          // Future slots — compact timeline
-          return (
-            <div key={i} style={{ display:'flex',gap:10,alignItems:'stretch' }}>
-              <div style={{ display:'flex',flexDirection:'column',alignItems:'center',width:64,paddingTop:11,flexShrink:0 }}>
-                <p style={{ margin:0,fontSize:11,fontWeight:600,color:C.muted,whiteSpace:'nowrap' }}>{fmtTime(slot.start)}</p>
-                {i<SLOTS.length-1 && <div style={{ flex:1,width:1,background:C.border,marginTop:5,marginBottom:4 }} />}
-              </div>
-              <div style={{ flex:1,marginBottom:6 }}>
-                <div style={{ background:C.surfaceHi,borderRadius:12,padding:'10px 14px',border:`1px solid ${C.border}` }}>
-                  <p style={{ margin:0,fontSize:14,fontWeight:500,color:C.text,marginBottom:myAct&&!slot.allGroups?8:0 }}>
-                    {slot.emoji} {slot.allGroups?slot.label:'Station Rotation'}
-                  </p>
-                  {slot.allGroups && <p style={{ margin:'3px 0 0',fontSize:11,color:C.muted }}>📍 {slot.location} · All Groups</p>}
-                  {myAct && !slot.allGroups && myGroup && (
-                    <div style={{ background:GROUPS[myGroup].bg,borderRadius:8,padding:'7px 10px',border:`1px solid ${GROUPS[myGroup].color}30` }}>
-                      <p style={{ margin:'0 0 2px',fontSize:12,fontWeight:700,color:GROUPS[myGroup].color }}>{myAct.s}</p>
-                      <p style={{ margin:0,fontSize:11,color:C.muted }}>📍 {myAct.l}</p>
+              <div style={{ display:'flex', width:'100%', justifyContent:'space-between', position:'relative', zIndex:1 }}>
+                {SLOTS.map((slot, i) => {
+                  const isPast = inVbs && cur > toMin(slot.end)
+                  const isCur  = curIdx === i
+                  const clr    = slot.allGroups ? GREEN : C.accent
+
+                  if (isPast) return (
+                    <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5 }}>
+                      <div style={{ width:20, height:20, borderRadius:'50%', background:clr, display:'flex', alignItems:'center', justifyContent:'center', border:`2px solid ${C.surface}` }}>
+                        <span style={{ fontSize:9, lineHeight:1, color:'#fff' }}>✓</span>
+                      </div>
+                      <span style={{ fontSize:7, color:clr, fontWeight:700, whiteSpace:'nowrap' }}>{fmtTime(slot.start)}</span>
                     </div>
-                  )}
-                </div>
+                  )
+
+                  if (isCur) return (
+                    <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5 }}>
+                      <div style={{ position:'relative', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        <div style={{ position:'absolute', top:-4, left:-4, right:-4, bottom:-4, borderRadius:'50%', background:hexToRgba(C.accent, 0.18), animation:'livePulse 2s ease infinite' }} />
+                        <div style={{ width:28, height:28, borderRadius:'50%', background:C.accent, border:`3px solid ${C.surface}`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', zIndex:1 }}>
+                          <div style={{ width:8, height:8, borderRadius:'50%', background:'#fff' }} />
+                        </div>
+                      </div>
+                      <span style={{ fontSize:7, color:C.accent, fontWeight:800 }}>NOW</span>
+                    </div>
+                  )
+
+                  return (
+                    <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5 }}>
+                      <div style={{
+                        width:20, height:20, borderRadius:'50%',
+                        background: slot.allGroups ? 'rgba(22,163,74,0.08)' : C.surfaceHi,
+                        border: `2px ${slot.allGroups ? 'dashed' : 'solid'} ${slot.allGroups ? 'rgba(22,163,74,0.35)' : C.border}`
+                      }} />
+                      <span style={{ fontSize:7, color:slot.allGroups ? GREEN : C.mutedLt, fontWeight:600, whiteSpace:'nowrap' }}>{fmtTime(slot.start)}</span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
-          )
-        })}
+
+            <p style={{ margin:'10px 0 0', fontSize:11, color:C.muted, textAlign:'center' }}>
+              {live.status === 'after'
+                ? 'All done — great work today! 🎉'
+                : `Stop ${curIdx + 1} of ${SLOTS.length} · ${SLOTS.length - curIdx - 1} stop${SLOTS.length - curIdx - 1 !== 1 ? 's' : ''} remaining`
+              }
+            </p>
+          </div>
+        )}
+
+        {/* NOW card */}
+        {curSlot && (
+          <div style={{ background:makeGradient(C.accent), borderRadius:16, padding:'18px 20px', marginBottom:10 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12 }}>
+              <div style={{ width:6, height:6, borderRadius:'50%', background:'rgba(255,255,255,0.88)', animation:'livePulse 2s ease infinite' }} />
+              <span style={{ fontSize:10, fontWeight:700, color:'rgba(255,255,255,0.78)', letterSpacing:'.08em', textTransform:'uppercase' }}>
+                Now · {fmtTime(curSlot.start)} – {fmtTime(curSlot.end)}
+              </span>
+            </div>
+            <p style={{ margin:'0 0 4px', fontSize:28, fontWeight:800, color:'#fff', lineHeight:1.05 }}>
+              {dEmoji(curSlot, curIdx)} {dName(curSlot, curIdx)}
+            </p>
+            {dLoc(curSlot, curIdx) && (
+              <p style={{ margin:'0 0 16px', fontSize:13, color:'rgba(255,255,255,0.82)' }}>📍 {dLoc(curSlot, curIdx)}</p>
+            )}
+            <div style={{ height:3, background:'rgba(255,255,255,0.25)', borderRadius:99, overflow:'hidden', marginBottom:8 }}>
+              <div style={{ height:'100%', width:`${Math.min(100,Math.max(0,live.progress*100))}%`, background:'#fff', borderRadius:99, transition:'width 30s linear' }} />
+            </div>
+            <span style={{ fontSize:12, color:'rgba(255,255,255,0.88)', fontWeight:600 }}>{live.minLeft} min left</span>
+          </div>
+        )}
+
+        {/* Up Next */}
+        {nextSlot && (
+          <div style={{ marginBottom:10 }}>
+            <p style={{ margin:'0 0 7px', fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:C.mutedLt }}>Up next</p>
+            <div style={{ background:C.surface, borderRadius:14, padding:'12px 14px', border:`1px solid ${C.border}`, display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:42, height:42, borderRadius:11, background:nextSlot.allGroups ? GREEN_BG : C.accentBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:20 }}>
+                {dEmoji(nextSlot, nextIdx)}
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <p style={{ margin:'0 0 2px', fontSize:16, fontWeight:700, color:C.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                  {dName(nextSlot, nextIdx)}
+                </p>
+                <p style={{ margin:0, fontSize:11, color:C.muted }}>
+                  {fmtTime(nextSlot.start)}{dLoc(nextSlot, nextIdx) ? ` · ${dLoc(nextSlot, nextIdx)}` : ''}
+                </p>
+              </div>
+              {minsUntil(nextSlot) > 0 && (
+                <div style={{ textAlign:'right', flexShrink:0 }}>
+                  <p style={{ margin:'0 0 2px', fontSize:13, fontWeight:700, color:C.accent }}>+{minsUntil(nextSlot)} min</p>
+                  <p style={{ margin:0, fontSize:9, color:C.mutedLt }}>from now</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Later */}
+        {laterList.length > 0 && (
+          <div style={{ marginBottom:10 }}>
+            <p style={{ margin:'0 0 7px', fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:C.mutedLt }}>Later</p>
+            <div style={{ background:C.surface, borderRadius:14, border:`1px solid ${C.border}`, overflow:'hidden' }}>
+              {laterList.map((slot, idx) => renderRow(slot, laterBaseIdx + idx, idx === laterList.length - 1))}
+            </div>
+          </div>
+        )}
+
+        {/* Before VBS / static fallback */}
+        {(live.status === 'before' || !inVbs) && (
+          <div>
+            <p style={{ margin:'0 0 7px', fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:C.mutedLt }}>
+              {live.status === 'before' ? "Today's schedule" : 'Daily schedule'}
+            </p>
+            <div style={{ background:C.surface, borderRadius:14, border:`1px solid ${C.border}`, overflow:'hidden' }}>
+              {SLOTS.map((slot, i) => renderRow(slot, i, i === SLOTS.length - 1))}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )
