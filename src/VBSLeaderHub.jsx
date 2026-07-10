@@ -1,5 +1,5 @@
-import { useState, useEffect, createContext, useContext } from "react"
-import { Calendar, Coffee, Users, Home, ChevronDown, ChevronRight, ChevronLeft, RefreshCw } from "lucide-react"
+import { useState, useEffect, useRef, createContext, useContext } from "react"
+import { Calendar, Coffee, Home, ChevronDown, ChevronRight, ChevronLeft, RefreshCw } from "lucide-react"
 
 // ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
 const GCSS = `
@@ -8,6 +8,8 @@ const GCSS = `
   @keyframes tabFade    { from{opacity:0;transform:scale(0.99) translateY(4px)} to{opacity:1;transform:scale(1) translateY(0)} }
   @keyframes fadeUp     { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   @keyframes livePulse  { 0%,100%{opacity:1} 50%{opacity:0.35} }
+  @keyframes wowReveal  { 0%{opacity:0;transform:scale(0.72) translateY(6px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
+  @keyframes iceSpin    { 0%{opacity:1;transform:scale(1) rotate(0deg)} 100%{opacity:0;transform:scale(0.92) rotate(-2deg)} }
   * { -webkit-tap-highlight-color:transparent; box-sizing:border-box; }
   body { overscroll-behavior:none; margin:0; background:#F2F2F7; font-family:'Plus Jakarta Sans',system-ui,sans-serif; }
   button { font-family:inherit; }
@@ -444,159 +446,212 @@ function NowHero({ myGroup, live, onChangeGroup }) {
   )
 }
 
-// ─── TEACHING CARD — merges Bible Point, Memory Verse, Icebreaker ─────────────
-function TeachingCard({ day }) {
+// ─── CARD DECK ────────────────────────────────────────────────────────────────
+function CardDeck({ day }) {
   const C = useC()
-  return (
-    <div style={{ background:C.surface,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden',marginBottom:10 }}>
-      <div style={{ background:`${day.accentColor}14`,borderBottom:`1px solid ${C.border}`,padding:'14px 16px',display:'flex',alignItems:'center',gap:14 }}>
-        <img src={BUDDY_IMGS[day.n]} alt={day.buddy} style={{ width:72,height:72,objectFit:'contain',flexShrink:0 }} />
-        <div>
-          <p style={{ margin:'0 0 2px',fontSize:11,fontWeight:600,color:C.muted }}>Day {day.n} Buddy</p>
-          <p style={{ margin:0,fontSize:20,fontWeight:700,color:C.text,lineHeight:1.2 }}>{day.buddy}</p>
-        </div>
-      </div>
-      <div style={{ padding:'16px 16px 14px',borderBottom:`1px solid ${C.border}` }}>
-        <p style={{ margin:'0 0 8px',fontSize:11,fontWeight:600,color:C.muted }}>Day {day.n} · Bible Point</p>
-        <p style={{ margin:'0 0 10px',fontSize:22,fontWeight:700,color:C.text,lineHeight:1.2 }}>{day.point}</p>
-        <span style={{ display:'inline-flex',background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:8,padding:'3px 10px',marginBottom:12 }}>
-          <span style={{ fontSize:12,fontWeight:700,color:C.accent }}>"Wow, God!"</span>
-        </span>
-        <p style={{ margin:'0 0 6px',fontSize:14,color:C.text,lineHeight:1.6,fontStyle:'italic' }}>{day.verseText}</p>
-        <p style={{ margin:0,fontSize:11,fontWeight:700,color:C.accent,textTransform:'uppercase',letterSpacing:'.06em' }}>{day.verseRef}</p>
-      </div>
-      <div style={{ padding:'12px 16px' }}>
-        <p style={{ margin:'0 0 5px',fontSize:11,fontWeight:600,color:C.muted }}>Crew Icebreaker</p>
-        <p style={{ margin:0,fontSize:14,color:C.text,lineHeight:1.55,fontStyle:'italic' }}>"{day.icebreaker}"</p>
-      </div>
-    </div>
+  const scrollRef = useRef(null)
+  const [activeDot, setActiveDot]     = useState(0)
+  const [bibleRevealed, setBible]     = useState(false)
+  const [verseFlipped, setVerse]      = useState(false)
+  const [jokeIdx, setJokeIdx]         = useState(0)
+  const [jokeRevealed, setJokeRev]    = useState(false)
+  const [iceIdx, setIceIdx]           = useState(0)
+  const [iceOut, setIceOut]           = useState(false)
+  const [tipIdx, setTipIdx]           = useState(0)
+
+  const hex = C.accent
+  const rv = parseInt(hex.slice(1,3),16), gv = parseInt(hex.slice(3,5),16), bv = parseInt(hex.slice(5,7),16)
+  const dark = `rgb(${Math.round(rv*.40)},${Math.round(gv*.40)},${Math.round(bv*.40)})`
+  const mid  = `rgb(${Math.round(rv*.58)},${Math.round(gv*.58)},${Math.round(bv*.58)})`
+  const deep = `rgb(${Math.round(rv*.30)},${Math.round(gv*.30)},${Math.round(bv*.30)})`
+
+  const W = 238, H = 278
+  const base = {
+    flexShrink:0, width:W, height:H, borderRadius:22,
+    position:'relative', overflow:'hidden',
+    scrollSnapAlign:'start', display:'flex', flexDirection:'column', padding:'18px 18px 16px',
+  }
+
+  // Subtle leaf SVG accent — one per card, different position/rotation each
+  const Leaf = ({ t, r, b, l, rot=0, s=68, op=0.11 }) => (
+    <svg viewBox="0 0 60 60" style={{ position:'absolute', top:t, right:r, bottom:b, left:l,
+      width:s, height:s, transform:`rotate(${rot}deg)`, opacity:op, pointerEvents:'none' }}>
+      <path d="M5 55 Q30 5 55 5 Q45 35 5 55Z" fill="white"/>
+    </svg>
   )
-}
 
-// ─── CREW KIT — tabbed Joke / Fact / Tip in one card ─────────────────────────
-function CrewKit() {
-  const C = useC()
-  const [tab,setTab] = useState('joke')
-  const [ji,setJi] = useState(0)
-  const [fi,setFi] = useState(0)
-  const [ti,setTi] = useState(0)
-  const [rev,setRev] = useState(false)
-  const joke = JOKES[ji]
-  const nextJoke = () => { setJi(i=>(i+1)%JOKES.length); setRev(false) }
+  const onScroll = () => {
+    if (!scrollRef.current) return
+    setActiveDot(Math.max(0, Math.min(4, Math.round(scrollRef.current.scrollLeft / (W + 12)))))
+  }
+
+  const spinIce = () => {
+    if (iceOut) return
+    setIceOut(true)
+    setTimeout(() => { setIceIdx(i => (i+1) % ICEBREAKERS.length); setIceOut(false) }, 230)
+  }
+
+  const joke = JOKES[jokeIdx]
 
   return (
-    <div style={{ background:C.surface,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden' }}>
-      <div style={{ display:'flex' }}>
-        {['joke','ice','tip'].map(t => (
-          <Tap key={t} onClick={()=>setTab(t)} style={{ flex:1,padding:'12px 0',textAlign:'center',borderBottom:`2px solid ${tab===t?C.accent:C.border}` }}>
-            <span style={{ fontSize:13,fontWeight:tab===t?700:500,color:tab===t?C.accent:C.muted }}>
-              {t === 'joke' ? 'Joke' : t === 'ice' ? 'Icebreaker' : 'Tip'}
-            </span>
-          </Tap>
-        ))}
-      </div>
-      <div style={{ padding:'14px 16px' }}>
-        {tab === 'joke' && (
-          <>
-            <p style={{ margin:'0 0 12px',fontSize:14,fontWeight:600,color:C.text,lineHeight:1.5 }}>{joke.q}</p>
-            {rev
-              ? <div style={{ background:C.accentBg,borderRadius:10,padding:'10px 12px',marginBottom:10,border:`1px solid ${C.accentBdr}` }}>
-                  <p style={{ margin:0,fontSize:14,fontWeight:700,color:C.accent }}>{joke.a}</p>
-                </div>
-              : <Tap onClick={()=>setRev(true)} style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:10,padding:'10px 12px',textAlign:'center',marginBottom:10 }}>
-                  <span style={{ fontSize:13,fontWeight:700,color:C.accent }}>Reveal Punchline</span>
-                </Tap>
-            }
-            <Tap onClick={nextJoke} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',borderRadius:8,border:`1px solid ${C.border}` }}>
-              <RefreshCw size={13} color={C.muted} strokeWidth={2} />
-              <span style={{ fontSize:12,color:C.muted,fontWeight:600 }}>Next Joke ({ji+1}/{JOKES.length})</span>
-            </Tap>
-          </>
-        )}
-        {tab === 'ice' && (
-          <>
-            <p style={{ margin:'0 0 12px',fontSize:14,color:C.text,lineHeight:1.6 }}>{ICEBREAKERS[fi]}</p>
-            <Tap onClick={()=>setFi(i=>(i+1)%ICEBREAKERS.length)} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'8px',borderRadius:8,border:`1px solid ${C.border}` }}>
-              <RefreshCw size={13} color={C.muted} strokeWidth={2} />
-              <span style={{ fontSize:12,color:C.muted,fontWeight:600 }}>Next Question ({fi+1}/{ICEBREAKERS.length})</span>
-            </Tap>
-          </>
-        )}
-        {tab === 'tip' && (
-          <>
-            <p style={{ margin:'0 0 12px',fontSize:14,color:C.text,lineHeight:1.55 }}>
-              <span style={{ marginRight:6 }}>{TIPS[ti].icon}</span>{TIPS[ti].tip}
-            </p>
-            <div style={{ display:'flex',alignItems:'center',gap:8 }}>
-              <Tap onClick={()=>setTi(i=>(i-1+TIPS.length)%TIPS.length)} style={{ background:C.surfaceHi,border:`1px solid ${C.border}`,borderRadius:8,padding:'7px 14px' }}>
-                <span style={{ fontSize:13,color:C.muted,fontWeight:600 }}>‹ Prev</span>
-              </Tap>
-              <span style={{ flex:1,textAlign:'center',fontSize:12,color:C.muted }}>Tip {ti+1} of {TIPS.length}</span>
-              <Tap onClick={()=>setTi(i=>(i+1)%TIPS.length)} style={{ background:C.surfaceHi,border:`1px solid ${C.border}`,borderRadius:8,padding:'7px 14px' }}>
-                <span style={{ fontSize:13,color:C.muted,fontWeight:600 }}>Next ›</span>
-              </Tap>
+    <div>
+      <div ref={scrollRef} onScroll={onScroll} style={{
+        display:'flex', gap:12, overflowX:'auto', scrollSnapType:'x mandatory',
+        scrollBehavior:'smooth', scrollbarWidth:'none', WebkitOverflowScrolling:'touch',
+        paddingLeft:16, paddingRight:16, paddingBottom:4, scrollPaddingLeft:16,
+      }}>
+
+        {/* ── Card 1: Bible Point ── */}
+        <Tap style={{ ...base, background:`linear-gradient(155deg,${deep},${hex})`, color:'#fff' }}
+          onClick={() => setBible(true)}>
+          <Leaf t={-14} r={-10} rot={45} s={78} />
+          <p style={{ margin:'0 0 3px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Day {day.n} · Bible Point</p>
+          <div style={{ display:'flex',alignItems:'center',gap:9,marginBottom:12 }}>
+            <img src={BUDDY_IMGS[day.n]} alt={day.buddy} style={{ width:46,height:46,objectFit:'contain',flexShrink:0 }} />
+            <div>
+              <p style={{ margin:'0 0 1px',fontSize:8,fontWeight:600,color:'rgba(255,255,255,0.48)' }}>Today's buddy</p>
+              <p style={{ margin:0,fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.88)' }}>{day.buddy}</p>
             </div>
-          </>
-        )}
+          </div>
+          <p style={{ margin:0,fontSize:21,fontWeight:800,lineHeight:1.2,flex:1,color:'#fff' }}>{day.point}</p>
+          <div style={{ background:'rgba(255,255,255,0.14)',borderRadius:12,height:46,
+            display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',marginTop:12 }}>
+            {!bibleRevealed
+              ? <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.62)' }}>Tap · see the response</span>
+              : <span key="wow" style={{ fontSize:16,fontWeight:800,color:'#fff',animation:'wowReveal 0.4s cubic-bezier(0.34,1.56,0.64,1) both' }}>"Wow, God!" 🙌</span>
+            }
+          </div>
+        </Tap>
+
+        {/* ── Card 2: Memory Verse (3D flip) ── */}
+        <div onClick={() => setVerse(v => !v)}
+          style={{ flexShrink:0,width:W,height:H,borderRadius:22,scrollSnapAlign:'start',cursor:'pointer',perspective:'1000px' }}>
+          <div style={{
+            width:'100%',height:'100%',position:'relative',
+            transformStyle:'preserve-3d',
+            transition:'transform 0.55s cubic-bezier(0.4,0,0.2,1)',
+            transform: verseFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          }}>
+            {/* Front */}
+            <div style={{ position:'absolute',inset:0,borderRadius:22,
+              backfaceVisibility:'hidden',WebkitBackfaceVisibility:'hidden',
+              background:`linear-gradient(155deg,${mid},${dark})`,
+              color:'#fff',display:'flex',flexDirection:'column',padding:'18px 18px 16px',overflow:'hidden' }}>
+              <svg viewBox="0 0 60 60" style={{ position:'absolute',top:-10,right:-8,width:72,height:72,opacity:.10,pointerEvents:'none' }}>
+                <path d="M5 55 Q30 5 55 5 Q45 35 5 55Z" fill="white" transform="rotate(30 30 30)"/>
+              </svg>
+              <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Memory Verse</p>
+              <p style={{ margin:'0 0 10px',fontSize:22,fontWeight:800,color:'#fff' }}>{day.verseRef}</p>
+              <p style={{ margin:0,fontSize:13,color:'rgba(255,255,255,0.36)',lineHeight:1.6,flex:1,fontStyle:'italic',filter:'blur(3.5px)',userSelect:'none' }}>{day.verseText}</p>
+              <div style={{ background:'rgba(255,255,255,0.16)',borderRadius:10,padding:'9px',textAlign:'center',marginTop:10 }}>
+                <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.82)' }}>↻  Flip to reveal</span>
+              </div>
+            </div>
+            {/* Back */}
+            <div style={{ position:'absolute',inset:0,borderRadius:22,
+              backfaceVisibility:'hidden',WebkitBackfaceVisibility:'hidden',
+              transform:'rotateY(180deg)',
+              background:C.surface,border:`2px solid rgba(${rv},${gv},${bv},0.20)`,
+              display:'flex',flexDirection:'column',padding:'18px 18px 16px',overflow:'hidden' }}>
+              <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:hex }}>{day.verseRef}</p>
+              <p style={{ margin:0,fontSize:15,color:C.text,lineHeight:1.7,fontStyle:'italic',flex:1 }}>{day.verseText}</p>
+              <p style={{ margin:'8px 0 0',fontSize:10,fontWeight:700,color:hex,opacity:.6 }}>← Tap to flip back</p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Card 3: Crew Joke ── */}
+        <Tap style={{ ...base,background:`linear-gradient(155deg,${deep},${mid})`,color:'#fff' }}
+          onClick={() => !jokeRevealed && setJokeRev(true)}>
+          <Leaf b={-12} r={-10} rot={-20} s={74} />
+          <p style={{ margin:'0 0 8px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Crew Joke 😂</p>
+          <p style={{ margin:0,fontSize:15,fontWeight:700,lineHeight:1.5,flex:1,color:'#fff' }}>{joke.q}</p>
+          <div style={{ background:'rgba(255,255,255,0.14)',borderRadius:12,height:54,
+            position:'relative',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center' }}>
+            {!jokeRevealed && <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.62)',position:'relative',zIndex:1 }}>Tap to reveal punchline</span>}
+            <div style={{
+              position:'absolute',inset:0,background:'rgba(255,255,255,0.20)',
+              display:'flex',alignItems:'center',justifyContent:'center',padding:'0 12px',textAlign:'center',
+              transform: jokeRevealed ? 'translateY(0)' : 'translateY(110%)',
+              transition:'transform 0.42s cubic-bezier(0.34,1.56,0.64,1)',
+            }}>
+              <span style={{ fontSize:14,fontWeight:800,color:'#fff' }}>{joke.a}</span>
+            </div>
+          </div>
+          {jokeRevealed && (
+            <Tap onClick={e => { e.stopPropagation(); setJokeIdx(i=>(i+1)%JOKES.length); setJokeRev(false) }}
+              style={{ marginTop:8,background:'rgba(255,255,255,0.14)',borderRadius:10,padding:'8px',textAlign:'center' }}>
+              <span style={{ fontSize:11,fontWeight:700,color:'rgba(255,255,255,0.82)' }}>↻ Next joke · {jokeIdx+1}/{JOKES.length}</span>
+            </Tap>
+          )}
+        </Tap>
+
+        {/* ── Card 4: Icebreaker ── */}
+        <div style={{ ...base,background:C.surface,border:`2.5px solid ${hex}`,cursor:'default' }}>
+          <svg viewBox="0 0 60 60" style={{ position:'absolute',bottom:-12,right:-12,width:72,height:72,opacity:.07,pointerEvents:'none' }}>
+            <path d="M5 55 Q30 5 55 5 Q45 35 5 55Z" fill={hex}/>
+          </svg>
+          <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:hex }}>Crew Icebreaker ❓</p>
+          <p style={{ margin:0,fontSize:15,fontWeight:700,lineHeight:1.6,flex:1,color:C.text,
+            opacity:iceOut?0:1, transform:iceOut?'scale(0.94) rotate(-1.5deg)':'scale(1)',
+            transition:'opacity 0.22s, transform 0.22s' }}>
+            "{ICEBREAKERS[iceIdx]}"
+          </p>
+          <Tap onClick={spinIce} style={{ background:`rgba(${rv},${gv},${bv},0.10)`,borderRadius:10,padding:'10px',textAlign:'center',marginTop:10 }}>
+            <span style={{ fontSize:12,fontWeight:700,color:hex }}>🎲 New question · {iceIdx+1}/{ICEBREAKERS.length}</span>
+          </Tap>
+        </div>
+
+        {/* ── Card 5: Leader Tip ── */}
+        <div style={{ ...base,background:`linear-gradient(155deg,${dark},${hex})`,color:'#fff',cursor:'default' }}>
+          <Leaf t={-10} l={-10} rot={120} s={66} />
+          <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Leader Tip 🌿</p>
+          <p style={{ margin:'0 0 8px',fontSize:28 }}>{TIPS[tipIdx].icon}</p>
+          <p style={{ margin:0,fontSize:14,fontWeight:600,lineHeight:1.6,flex:1,color:'#fff' }}>{TIPS[tipIdx].tip}</p>
+          <div style={{ display:'flex',gap:8,marginTop:10 }}>
+            <Tap onClick={() => setTipIdx(i=>(i-1+TIPS.length)%TIPS.length)}
+              style={{ flex:1,background:'rgba(255,255,255,0.16)',borderRadius:10,padding:'8px',textAlign:'center' }}>
+              <span style={{ fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.88)' }}>‹ Prev</span>
+            </Tap>
+            <Tap onClick={() => setTipIdx(i=>(i+1)%TIPS.length)}
+              style={{ flex:1,background:'rgba(255,255,255,0.16)',borderRadius:10,padding:'8px',textAlign:'center' }}>
+              <span style={{ fontSize:12,fontWeight:700,color:'rgba(255,255,255,0.88)' }}>Next ›</span>
+            </Tap>
+          </div>
+          <p style={{ margin:'6px 0 0',textAlign:'center',fontSize:10,color:'rgba(255,255,255,0.48)' }}>Tip {tipIdx+1} of {TIPS.length}</p>
+        </div>
+
+        {/* trailing pad so last card can scroll into view */}
+        <div style={{ flexShrink:0,width:4 }} />
+      </div>
+
+      {/* Scroll dots */}
+      <div style={{ display:'flex',justifyContent:'center',gap:5,marginTop:10 }}>
+        {[0,1,2,3,4].map(i => (
+          <div key={i} onClick={() => scrollRef.current?.scrollTo({ left:i*(W+12), behavior:'smooth' })}
+            style={{
+              width:activeDot===i?18:6, height:6, borderRadius:99,
+              background:activeDot===i?hex:C.border,
+              transition:'all 0.3s cubic-bezier(0.34,1.56,0.64,1)', cursor:'pointer',
+            }} />
+        ))}
       </div>
     </div>
   )
 }
 
 // ─── TODAY PAGE ───────────────────────────────────────────────────────────────
-function TodayPage({ myGroup, live, now, onViewSchedule, onChangeGroup }) {
+function TodayPage({ myGroup, live, now, onChangeGroup }) {
   const C = useC()
   const dayIdx = live.dayIdx >= 0 ? live.dayIdx : (now < new Date('2026-07-13') ? 0 : DAYS.length - 1)
   const day = DAYS[dayIdx]
-  const cur = now.getHours() * 60 + now.getMinutes()
-  const inVbs = ['live','before','after'].includes(live.status)
-
-  const upcomingSlots = SLOTS
-    .map((s, i) => ({ ...s, i }))
-    .filter(s => !inVbs || toMin(s.end) > cur)
-    .slice(0, 3)
-
-  const isCur = i => live.status === 'live' && live.slotIdx === i
-  const isPast = s => inVbs && cur > toMin(s.end)
 
   return (
     <div>
       <NowHero myGroup={myGroup} live={live} onChangeGroup={onChangeGroup} />
-
-      <div style={{ padding:'14px 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
-
-        <TeachingCard day={day} />
-
-        <p style={{ margin:'16px 0 8px',fontSize:13,fontWeight:600,color:C.muted }}>
-          Coming up
-        </p>
-        <div style={{ background:C.surface,borderRadius:13,overflow:'hidden',marginBottom:8 }}>
-          {upcomingSlots.map((slot, idx) => {
-            const active = isCur(slot.i)
-            const past = isPast(slot)
-            const myAct = myGroup ? getActivity(myGroup, slot.i) : null
-            const displayName = slot.allGroups ? slot.label : (myAct ? myAct.s : 'Station Rotation')
-            const displayLoc  = slot.allGroups ? slot.location : myAct?.l
-            return (
-              <div key={slot.i} style={{ padding:'10px 14px',opacity:past?0.35:1,background:active?C.accentBg:'transparent',borderTop:idx>0?`0.5px solid ${C.border}`:'none' }}>
-                <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2 }}>
-                  <p style={{ margin:0,fontSize:14,fontWeight:active?700:500,color:active?C.accent:C.text }}>
-                    {slot.emoji} {displayName}
-                  </p>
-                  {active && <span style={{ fontSize:9,fontWeight:700,background:C.accent,color:'#fff',padding:'2px 8px',borderRadius:99,textTransform:'uppercase',letterSpacing:'.06em',flexShrink:0 }}>NOW</span>}
-                </div>
-                <p style={{ margin:0,fontSize:11,color:active?C.accent:C.muted }}>
-                  {fmtTime(slot.start)} – {fmtTime(slot.end)}{displayLoc ? ` · 📍 ${displayLoc}` : ''}
-                </p>
-              </div>
-            )
-          })}
-        </div>
-        <Tap onClick={onViewSchedule} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:4,padding:'10px',borderRadius:12,border:`1px solid ${C.border}`,background:C.surface,marginBottom:14 }}>
-          <span style={{ fontSize:13,fontWeight:600,color:C.accent }}>Full schedule</span>
-          <ChevronRight size={14} color={C.accent} />
-        </Tap>
-
+      <div style={{ padding:'16px 0 calc(92px + env(safe-area-inset-bottom,0px))' }}>
+        <p style={{ margin:'0 0 10px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>Today</p>
+        <CardDeck day={day} />
       </div>
     </div>
   )
@@ -1243,41 +1298,11 @@ function CoffeePage({ myGroup }) {
   )
 }
 
-// ─── CREW PAGE ────────────────────────────────────────────────────────────────
-function CrewPage({ live }) {
-  const C = useC()
-  const dayData = live.dayIdx>=0 ? DAYS[live.dayIdx] : DAYS[0]
-
-  return (
-    <div>
-      <div style={{ padding:'calc(22px + env(safe-area-inset-top,0px)) 16px 14px' }}>
-        <h2 style={{ margin:'0 0 2px',fontSize:28,fontWeight:700,color:C.text }}>Crew</h2>
-        <p style={{ margin:0,fontSize:13,color:C.muted }}>Resources for crew leaders</p>
-      </div>
-
-      <div style={{ padding:'0 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
-        <div style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:16,overflow:'hidden',marginBottom:12 }}>
-          <div style={{ display:'flex',alignItems:'flex-end',gap:0 }}>
-            <img src={BUDDY_IMGS[dayData.n]} alt={dayData.buddy} style={{ width:88,height:88,objectFit:'contain',flexShrink:0,marginLeft:8 }} />
-            <div style={{ padding:'14px 16px 14px 10px',flex:1 }}>
-              <p style={{ margin:'0 0 4px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.accent }}>Crew Icebreaker · Day {dayData.n}</p>
-              <p style={{ margin:0,fontSize:14,color:C.text,lineHeight:1.5,fontStyle:'italic' }}>"{dayData.icebreaker}"</p>
-            </div>
-          </div>
-        </div>
-
-        <CrewKit />
-      </div>
-    </div>
-  )
-}
-
 // ─── BOTTOM NAV ───────────────────────────────────────────────────────────────
 const TABS = [
   { id:'today',    label:'Today',    Icon:Home     },
   { id:'schedule', label:'Schedule', Icon:Calendar },
   { id:'coffee',   label:'Coffee',   Icon:Coffee   },
-  { id:'crew',     label:'Crew',     Icon:Users    },
 ]
 
 function BottomNav({ page, setPage }) {
@@ -1339,10 +1364,9 @@ export default function VBSLeaderHub() {
     <TC.Provider value={activeTheme}>
       <div style={{ background:TH.bg,minHeight:'100vh',color:TH.text,fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",maxWidth:430,margin:'0 auto',position:'relative' }}>
         <div key={page} style={{ animation:'tabFade 220ms cubic-bezier(0.2,0,0,1) both' }}>
-          {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onViewSchedule={()=>setPage('schedule')} onChangeGroup={()=>setChanging(true)} />}
+          {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} />}
           {page==='schedule' && <SchedulePage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} />}
           {page==='coffee'   && <CoffeePage myGroup={myGroup} />}
-          {page==='crew'     && <CrewPage live={live} />}
         </div>
         <BottomNav page={page} setPage={setPage} />
         {changing && <GroupModal myGroup={myGroup} onSelect={g=>{saveGroup(g);setChanging(false)}} onClose={()=>setChanging(false)} />}
