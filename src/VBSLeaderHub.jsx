@@ -286,7 +286,40 @@ function Splash({ onDone }) {
 // ─── GROUP PICKER ─────────────────────────────────────────────────────────────
 function GroupPicker({ onSelect }) {
   const C = useC()
-  const [sel,setSel] = useState(null)
+  const [confirmed, setConfirmed] = useState(null)
+
+  if (confirmed) {
+    const g = GROUPS[confirmed]
+    const isNone = confirmed === 'none'
+    return (
+      <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'calc(52px + env(safe-area-inset-top,0px)) 28px calc(40px + env(safe-area-inset-bottom,0px))', background:isNone ? C.bg : g.color, animation:'fadeUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both', textAlign:'center' }}>
+        {isNone
+          ? <div style={{ fontSize:72, marginBottom:24, lineHeight:1 }}>👋</div>
+          : <div style={{ position:'relative', marginBottom:32 }}>
+              <div style={{ width:120, height:120, borderRadius:'50%', background:'rgba(255,255,255,0.18)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <div style={{ width:80, height:80, borderRadius:'50%', background:'rgba(255,255,255,0.35)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <div style={{ width:48, height:48, borderRadius:'50%', background:'rgba(255,255,255,0.7)' }} />
+                </div>
+              </div>
+              <div style={{ position:'absolute', top:-8, right:-8, fontSize:28 }}>🎉</div>
+            </div>
+        }
+        <h1 style={{ margin:'0 0 8px', fontSize:28, fontWeight:800, color:isNone ? C.text : '#fff', lineHeight:1.2 }}>
+          {isNone ? "You're all set!" : `You joined the\n${g.label} team!`}
+        </h1>
+        <p style={{ margin:'0 0 10px', fontSize:15, fontWeight:600, color:isNone ? C.muted : 'rgba(255,255,255,0.9)', lineHeight:1.5 }}>
+          {isNone ? 'Welcome, staff! Your hub is ready.' : 'Welcome to the team — let\'s have a great week! 🌿'}
+        </p>
+        <p style={{ margin:'0 0 36px', fontSize:13, color:isNone ? C.mutedLt : 'rgba(255,255,255,0.7)', lineHeight:1.65, maxWidth:270 }}>
+          To switch groups later, tap your color badge in the top-right corner of the app.
+        </p>
+        <Tap onClick={() => onSelect(confirmed)} style={{ background:isNone ? C.accent : 'rgba(255,255,255,0.25)', border:isNone ? 'none' : '2px solid rgba(255,255,255,0.45)', borderRadius:16, padding:'16px 0', width:'100%', maxWidth:300 }}>
+          <span style={{ fontSize:16, fontWeight:700, color:'#fff' }}>Let's go! →</span>
+        </Tap>
+      </div>
+    )
+  }
+
   return (
     <div style={{ minHeight:'100vh',background:C.bg,display:'flex',flexDirection:'column',padding:'calc(52px + env(safe-area-inset-top,0px)) 20px calc(40px + env(safe-area-inset-bottom,0px))',animation:'fadeUp 0.4s ease both' }}>
       <div style={{ marginBottom:28 }}>
@@ -296,19 +329,14 @@ function GroupPicker({ onSelect }) {
       </div>
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,flex:1 }}>
         {Object.entries(GROUPS).filter(([k]) => k !== 'none').map(([key,g]) => (
-          <Tap key={key} onClick={()=>setSel(key)} style={{ background:sel===key?g.dark:C.surface,border:`2px solid ${sel===key?g.color:C.border}`,borderRadius:18,padding:'22px 14px',textAlign:'center' }}>
-            <div style={{ width:44,height:44,borderRadius:'50%',background:g.color,margin:'0 auto 12px',boxShadow:sel===key?`0 0 18px ${g.color}50`:'none' }} />
-            <p style={{ margin:0,fontSize:14,fontWeight:700,color:sel===key?g.color:C.text,lineHeight:1.3 }}>{g.label}</p>
+          <Tap key={key} onClick={() => setConfirmed(key)} style={{ background:C.surface, border:`2px solid ${C.border}`, borderRadius:18, padding:'22px 14px', textAlign:'center' }}>
+            <div style={{ width:44,height:44,borderRadius:'50%',background:g.color,margin:'0 auto 12px',boxShadow:`0 2px 12px ${g.color}40` }} />
+            <p style={{ margin:0,fontSize:14,fontWeight:700,color:C.text,lineHeight:1.3 }}>{g.label}</p>
           </Tap>
         ))}
       </div>
-      <Tap onClick={()=>setSel('none')} style={{ marginTop:10,padding:'14px',borderRadius:14,textAlign:'center',background:sel==='none'?GROUPS.none.dark:C.surface,border:`2px solid ${sel==='none'?GROUPS.none.color:C.border}` }}>
-        <span style={{ fontSize:14,fontWeight:600,color:sel==='none'?GROUPS.none.color:C.muted }}>I'm not in a color group (station leader, stage, staff)</span>
-      </Tap>
-      <Tap onClick={()=>sel&&onSelect(sel)} disabled={!sel} style={{ marginTop:10,padding:'15px',borderRadius:14,textAlign:'center',background:sel?GROUPS[sel].color:C.surfaceHi }}>
-        <span style={{ fontSize:15,fontWeight:700,color:sel?'#fff':C.muted }}>
-          {sel==='none'?'Continue as staff / no group':sel?`I'm on the ${GROUPS[sel].label} group`:'Select a group above'}
-        </span>
+      <Tap onClick={() => setConfirmed('none')} style={{ marginTop:10,padding:'14px',borderRadius:14,textAlign:'center',background:C.surface,border:`2px solid ${C.border}` }}>
+        <span style={{ fontSize:14,fontWeight:600,color:C.muted }}>I'm not in a color group (station leader, stage, staff)</span>
       </Tap>
     </div>
   )
@@ -816,7 +844,7 @@ function HomeScreenGuide({ onDone, deferredPrompt, setDeferredPrompt }) {
 
   return (
     <div onClick={onDone} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:300, display:'flex', alignItems:'flex-end', backdropFilter:'blur(3px)', WebkitBackdropFilter:'blur(3px)' }}>
-      <div onClick={e => e.stopPropagation()} style={{ background:C.surface, width:'100%', maxWidth:430, margin:'0 auto', borderRadius:'24px 24px 0 0', padding:`28px 22px calc(32px + env(safe-area-inset-bottom,0px))`, animation:'fadeUp 0.3s ease both', border:`1px solid ${C.border}` }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:C.surface, width:'100%', maxWidth:430, margin:'0 auto', borderRadius:'24px 24px 0 0', padding:`28px 22px calc(32px + env(safe-area-inset-bottom,0px))`, animation:'fadeUp 0.3s ease both', border:`1px solid ${C.border}`, maxHeight:'calc(90vh - env(safe-area-inset-top,0px))', overflowY:'auto' }}>
 
         {/* Step counter */}
         <div style={{ display:'flex', justifyContent:'center', gap:5, marginBottom:22 }}>
