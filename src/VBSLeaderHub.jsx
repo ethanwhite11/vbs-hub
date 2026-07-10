@@ -81,7 +81,8 @@ const ROT = {
   red:    [{s:'Wild Games',                   l:'Field / Gym'},{s:'Worship',l:'Auditorium'},{s:'Rooted Bible Adventures',l:'Chapel'},{s:'Missions',l:'West Wing'},{s:'Treetop Treats / Imagination',l:'Pearson Fellowship Hall'}],
   green:  [{s:'Treetop Treats / Imagination', l:'Pearson Fellowship Hall'},{s:'Wild Games',l:'Field / Gym'},{s:'Worship',l:'Auditorium'},{s:'Rooted Bible Adventures',l:'Chapel'},{s:'Missions',l:'West Wing'}],
   purple: [{s:'Missions',                     l:'West Wing'},{s:'Treetop Treats / Imagination',l:'Pearson Fellowship Hall'},{s:'Wild Games',l:'Field / Gym'},{s:'Worship',l:'Auditorium'},{s:'Rooted Bible Adventures',l:'Chapel'}],
-  orange: [{s:'Paradise Preschool',           l:'West Wing / Nursery'},{s:'Paradise Preschool',l:'West Wing / Nursery'},{s:'Paradise Preschool',l:'West Wing / Nursery'},{s:'Paradise Preschool',l:'West Wing / Nursery'},{s:'Paradise Preschool',l:'West Wing / Nursery'}],
+  orange:  [{s:'Bible Adventures',l:'West Wing 272 A'},{s:'Crafts',l:'West Wing 272 B'},{s:'Snack',l:'Classroom'},{s:'Worship',l:'Classroom'},{s:'Games',l:'Outside – Bowl'}],
+  orange2: [{s:'Crafts',l:'West Wing 272 B'},{s:'Bible Adventures',l:'West Wing 272 A'},{s:'Snack',l:'Classroom'},{s:'Games',l:'Outside – Bowl'},{s:'Worship',l:'Classroom'}],
 }
 
 const STATION_EMOJI = {
@@ -90,7 +91,10 @@ const STATION_EMOJI = {
   'Treetop Treats / Imagination': '🎨',
   'Wild Games':                   '🏃',
   'Worship':                      '🙌',
-  'Paradise Preschool':           '🌴',
+  'Bible Adventures':             '📖',
+  'Crafts':                       '🎨',
+  'Snack':                        '🍎',
+  'Games':                        '🏃',
 }
 
 // ─── DAILY DATA ───────────────────────────────────────────────────────────────
@@ -222,11 +226,11 @@ function getLive(now) {
   return { status:'done', dayIdx }
 }
 
-function getActivity(g, slotIdx) {
+function getActivity(g, slotIdx, rotKey) {
   const slot = SLOTS[slotIdx]
   if (!slot) return null
   if (slot.allGroups) return { s:slot.label, l:slot.location }
-  if (slot.isRotation) return ROT[g]?.[slot.rotIdx] || null
+  if (slot.isRotation) return ROT[rotKey || g]?.[slot.rotIdx] || null
   return null
 }
 
@@ -334,7 +338,8 @@ function GroupModal({ myGroup, onSelect, onClose }) {
 }
 
 // ─── NOW HERO — full-bleed T1, handles safe-area, owns the group badge ────────
-function NowHero({ myGroup, live, onChangeGroup }) {
+function NowHero({ myGroup, live, onChangeGroup, preschoolSub }) {
+  const rotKey = myGroup === 'orange' ? (preschoolSub === 2 ? 'orange2' : 'orange') : myGroup
   const C = useC()
   const g = myGroup ? GROUPS[myGroup] : null
   const safePad = 'calc(22px + env(safe-area-inset-top,0px))'
@@ -406,9 +411,9 @@ function NowHero({ myGroup, live, onChangeGroup }) {
 
   // Live state
   const { slot, slotIdx, minLeft, progress, next } = live
-  const myAct = myGroup ? getActivity(myGroup, slotIdx) : null
+  const myAct = myGroup ? getActivity(myGroup, slotIdx, rotKey) : null
   const nextIdx = next ? SLOTS.indexOf(next) : -1
-  const nextAct = myGroup && nextIdx >= 0 ? getActivity(myGroup, nextIdx) : null
+  const nextAct = myGroup && nextIdx >= 0 ? getActivity(myGroup, nextIdx, rotKey) : null
   const nextLabel = next ? (next.allGroups ? next.label : nextAct?.s || 'Station Rotation') : null
 
   return (
@@ -668,14 +673,25 @@ function CardDeck({ day }) {
 }
 
 // ─── TODAY PAGE ───────────────────────────────────────────────────────────────
-function TodayPage({ myGroup, live, now, onChangeGroup }) {
+function TodayPage({ myGroup, live, now, onChangeGroup, preschoolSub, onToggleSub }) {
   const C = useC()
   const dayIdx = live.dayIdx >= 0 ? live.dayIdx : (now < new Date('2026-07-13') ? 0 : DAYS.length - 1)
   const day = DAYS[dayIdx]
+  const og = GROUPS.orange
 
   return (
     <div>
-      <NowHero myGroup={myGroup} live={live} onChangeGroup={onChangeGroup} />
+      <NowHero myGroup={myGroup} live={live} onChangeGroup={onChangeGroup} preschoolSub={preschoolSub} />
+      {myGroup === 'orange' && (
+        <div style={{ display:'flex', gap:8, padding:'10px 16px 0' }}>
+          <Tap onClick={() => onToggleSub(1)} style={{ flex:1, padding:'8px', borderRadius:10, border:`1.5px solid ${preschoolSub===1?og.color:C.border}`, background:preschoolSub===1?og.bg:C.surface, textAlign:'center' }}>
+            <span style={{ fontSize:12, fontWeight:700, color:preschoolSub===1?og.color:C.muted }}>P1 · Ages 2–3</span>
+          </Tap>
+          <Tap onClick={() => onToggleSub(2)} style={{ flex:1, padding:'8px', borderRadius:10, border:`1.5px solid ${preschoolSub===2?og.color:C.border}`, background:preschoolSub===2?og.bg:C.surface, textAlign:'center' }}>
+            <span style={{ fontSize:12, fontWeight:700, color:preschoolSub===2?og.color:C.muted }}>P2 · Ages 4–5</span>
+          </Tap>
+        </div>
+      )}
       <div style={{ padding:'16px 0 calc(92px + env(safe-area-inset-bottom,0px))' }}>
         <p style={{ margin:'0 0 10px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>Today</p>
         <CardDeck day={day} />
@@ -685,9 +701,10 @@ function TodayPage({ myGroup, live, now, onChangeGroup }) {
 }
 
 // ─── SCHEDULE PAGE ────────────────────────────────────────────────────────────
-function SchedulePage({ myGroup, live, now, onChangeGroup }) {
+function SchedulePage({ myGroup, live, now, onChangeGroup, preschoolSub, onToggleSub }) {
   const C = useC()
   const g = myGroup ? GROUPS[myGroup] : null
+  const rotKey = myGroup === 'orange' ? (preschoolSub === 2 ? 'orange2' : 'orange') : myGroup
   const cur = now.getHours()*60 + now.getMinutes()
   const inVbs = ['live','before','after'].includes(live.status)
 
@@ -702,17 +719,17 @@ function SchedulePage({ myGroup, live, now, onChangeGroup }) {
 
   const dName = (slot, i) =>
     slot.allGroups ? slot.label
-    : (myGroup && myGroup !== 'none') ? (getActivity(myGroup, i)?.s || 'Station Rotation')
+    : (myGroup && myGroup !== 'none') ? (getActivity(myGroup, i, rotKey)?.s || 'Station Rotation')
     : 'Station Rotation'
 
   const dLoc = (slot, i) =>
     slot.allGroups ? slot.location
-    : (myGroup && myGroup !== 'none') ? (getActivity(myGroup, i)?.l || null)
+    : (myGroup && myGroup !== 'none') ? (getActivity(myGroup, i, rotKey)?.l || null)
     : null
 
   const dEmoji = (slot, i) => {
     if (!slot.isRotation) return slot.emoji
-    const act = (myGroup && myGroup !== 'none') ? getActivity(myGroup, i) : null
+    const act = (myGroup && myGroup !== 'none') ? getActivity(myGroup, i, rotKey) : null
     return (act && STATION_EMOJI[act.s]) || slot.emoji
   }
 
@@ -761,6 +778,16 @@ function SchedulePage({ myGroup, live, now, onChangeGroup }) {
           )}
         </div>
         <p style={{ margin:0, fontSize:12, color:C.muted }}>July 13–17 · 9:00 AM – 12:00 PM daily</p>
+        {myGroup === 'orange' && (
+          <div style={{ display:'flex', gap:8, marginTop:10 }}>
+            <Tap onClick={() => onToggleSub(1)} style={{ flex:1, padding:'8px', borderRadius:10, border:`1.5px solid ${preschoolSub===1?g.color:C.border}`, background:preschoolSub===1?g.bg:C.surface, textAlign:'center' }}>
+              <span style={{ fontSize:12, fontWeight:700, color:preschoolSub===1?g.color:C.muted }}>P1 · Ages 2–3</span>
+            </Tap>
+            <Tap onClick={() => onToggleSub(2)} style={{ flex:1, padding:'8px', borderRadius:10, border:`1.5px solid ${preschoolSub===2?g.color:C.border}`, background:preschoolSub===2?g.bg:C.surface, textAlign:'center' }}>
+              <span style={{ fontSize:12, fontWeight:700, color:preschoolSub===2?g.color:C.muted }}>P2 · Ages 4–5</span>
+            </Tap>
+          </div>
+        )}
       </div>
 
       <div style={{ padding:'0 16px calc(92px + env(safe-area-inset-bottom,0px))' }}>
@@ -1363,6 +1390,7 @@ export default function VBSLeaderHub() {
   })()
   const [now,setNow] = useState(() => new Date(Date.now() + mockOffset))
   const [changing,setChanging] = useState(false)
+  const [preschoolSub,setPreschoolSub] = useState(1)
 
   useEffect(() => {
     const s = document.createElement('style'); s.textContent = GCSS; document.head.appendChild(s)
@@ -1391,8 +1419,8 @@ export default function VBSLeaderHub() {
     <TC.Provider value={activeTheme}>
       <div style={{ background:TH.bg,minHeight:'100vh',color:TH.text,fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",maxWidth:430,margin:'0 auto',position:'relative' }}>
         <div key={page} style={{ animation:'tabFade 220ms cubic-bezier(0.2,0,0,1) both' }}>
-          {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} />}
-          {page==='schedule' && <SchedulePage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} />}
+          {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} preschoolSub={preschoolSub} onToggleSub={setPreschoolSub} />}
+          {page==='schedule' && <SchedulePage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} preschoolSub={preschoolSub} onToggleSub={setPreschoolSub} />}
           {page==='coffee'   && <CoffeePage myGroup={myGroup} />}
         </div>
         <BottomNav page={page} setPage={setPage} />
