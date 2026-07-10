@@ -333,8 +333,79 @@ function GroupModal({ myGroup, onSelect, onClose }) {
   )
 }
 
+// ─── ONBOARDING MODAL ────────────────────────────────────────────────────────
+const ONBOARD_STEPS = [
+  { emoji:'🌿', title:'Welcome to Leader Hub', body:"Your VBS command center for the whole week. Here's a quick look at what's inside — takes about 30 seconds." },
+  { emoji:'🏠', title:'Today Tab', body:'Your daily guide. Bible point, memory verse, icebreaker, crew reminders, and your animated daily buddy — all in one card deck. Swipe through each morning.' },
+  { emoji:'📅', title:'Schedule Tab', body:"Your group's full station rotation with live tracking. A real-time countdown shows exactly what's up next and where to go." },
+  { emoji:'☕', title:'The Café @ Gateway', body:'Order a $2 drink from The Café. Pick your drink, customize it, and send the order straight from your phone via text.' },
+  { emoji:'📱', title:'Save to Your Home Screen', body:null, isHomeScreen:true },
+]
+
+function OnboardingModal({ onDone }) {
+  const C = useC()
+  const [step, setStep] = useState(0)
+  const total = ONBOARD_STEPS.length
+  const cur = ONBOARD_STEPS[step]
+  const isLast = step === total - 1
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  const isAndroid = /Android/.test(navigator.userAgent)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone
+
+  const homeBody = isStandalone
+    ? "You're already running from your home screen — you're all set! 🎉"
+    : isIOS
+    ? 'Tap the Share button at the bottom of Safari (the box with an arrow ↑), then tap "Add to Home Screen". It opens instantly like an app.'
+    : isAndroid
+    ? 'Tap the three-dot menu at the top right of Chrome, then tap "Add to Home Screen" or "Install app".'
+    : 'In your browser menu, look for "Add to Home Screen" or "Install app" to save Leader Hub to your home screen.'
+
+  return (
+    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:300,display:'flex',alignItems:'flex-end',backdropFilter:'blur(3px)',WebkitBackdropFilter:'blur(3px)' }}>
+      <div style={{ background:C.surface,width:'100%',maxWidth:430,margin:'0 auto',borderRadius:'24px 24px 0 0',padding:`28px 22px calc(32px + env(safe-area-inset-bottom,0px))`,animation:'fadeUp 0.3s ease both',border:`1px solid ${C.border}` }}>
+        <div style={{ fontSize:52,textAlign:'center',marginBottom:14,lineHeight:1 }}>{cur.emoji}</div>
+        <h2 style={{ margin:'0 0 10px',fontSize:22,fontWeight:700,color:C.text,textAlign:'center' }}>{cur.title}</h2>
+        <p style={{ margin:'0 0 20px',fontSize:15,color:C.muted,textAlign:'center',lineHeight:1.65 }}>
+          {cur.isHomeScreen ? homeBody : cur.body}
+        </p>
+
+        {cur.isHomeScreen && !isStandalone && isIOS && (
+          <div style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:10,padding:'10px 14px',marginBottom:16,textAlign:'center' }}>
+            <p style={{ margin:0,fontSize:12,color:C.accent,fontWeight:600 }}>Safari only — won't work in Chrome on iPhone</p>
+          </div>
+        )}
+
+        <div style={{ display:'flex',justifyContent:'center',gap:6,marginBottom:20 }}>
+          {ONBOARD_STEPS.map((_,i) => (
+            <div key={i} style={{ width:i===step?18:6,height:6,borderRadius:99,background:i<=step?C.accent:C.border,transition:'all 0.3s ease' }} />
+          ))}
+        </div>
+
+        <div style={{ display:'flex',gap:8 }}>
+          {step > 0 && (
+            <Tap onClick={()=>setStep(s=>s-1)} style={{ padding:'13px 18px',borderRadius:12,border:`1px solid ${C.border}`,textAlign:'center' }}>
+              <span style={{ fontSize:14,color:C.muted }}>Back</span>
+            </Tap>
+          )}
+          <Tap onClick={isLast ? onDone : ()=>setStep(s=>s+1)}
+            style={{ flex:1,padding:'14px',borderRadius:12,background:C.accent,textAlign:'center' }}>
+            <span style={{ fontSize:15,fontWeight:700,color:'#fff' }}>{isLast ? "Let's go! 🌿" : 'Next →'}</span>
+          </Tap>
+        </div>
+
+        {!isLast && (
+          <Tap onClick={onDone} style={{ marginTop:12,textAlign:'center' }}>
+            <span style={{ fontSize:13,color:C.mutedLt }}>Skip intro</span>
+          </Tap>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── NOW HERO — full-bleed T1, handles safe-area, owns the group badge ────────
-function NowHero({ myGroup, live, onChangeGroup }) {
+function NowHero({ myGroup, live, onChangeGroup, onHelp }) {
   const C = useC()
   const g = myGroup ? GROUPS[myGroup] : null
   const safePad = 'calc(22px + env(safe-area-inset-top,0px))'
@@ -342,18 +413,29 @@ function NowHero({ myGroup, live, onChangeGroup }) {
   const lightBase = { background:C.surface, padding:`${safePad} 20px 22px`, borderBottom:`1px solid ${C.border}` }
 
   const hasColorGroup = myGroup && myGroup !== 'none'
-  const WhiteBadge = () => (
-    <Tap onClick={onChangeGroup} style={{ background:'rgba(255,255,255,0.2)',borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
-      {hasColorGroup && <div style={{ width:7,height:7,borderRadius:'50%',background:'rgba(255,255,255,0.9)' }} />}
-      <span style={{ fontSize:11,fontWeight:700,color:'#fff' }}>{hasColorGroup ? g.label.split(' ')[0] : 'Staff'}</span>
+  const HelpBtn = ({ light }) => (
+    <Tap onClick={onHelp} style={{ width:28,height:28,borderRadius:'50%',background:light?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.06)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>
+      <span style={{ fontSize:13,fontWeight:700,color:light?'rgba(255,255,255,0.85)':C.muted,lineHeight:1 }}>?</span>
     </Tap>
+  )
+  const WhiteBadge = () => (
+    <div style={{ display:'flex',alignItems:'center',gap:6 }}>
+      <HelpBtn light />
+      <Tap onClick={onChangeGroup} style={{ background:'rgba(255,255,255,0.2)',borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
+        {hasColorGroup && <div style={{ width:7,height:7,borderRadius:'50%',background:'rgba(255,255,255,0.9)' }} />}
+        <span style={{ fontSize:11,fontWeight:700,color:'#fff' }}>{hasColorGroup ? g.label.split(' ')[0] : 'Staff'}</span>
+      </Tap>
+    </div>
   )
 
   const ColorBadge = () => (
-    <Tap onClick={onChangeGroup} style={{ background:hasColorGroup?g.bg:'rgba(0,0,0,0.05)',border:`1px solid ${hasColorGroup?g.color+'50':C.border}`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
-      {hasColorGroup && <div style={{ width:7,height:7,borderRadius:'50%',background:g.color }} />}
-      <span style={{ fontSize:11,fontWeight:700,color:hasColorGroup?g.color:C.muted }}>{hasColorGroup ? g.label.split(' ')[0] : 'Staff'}</span>
-    </Tap>
+    <div style={{ display:'flex',alignItems:'center',gap:6 }}>
+      <HelpBtn />
+      <Tap onClick={onChangeGroup} style={{ background:hasColorGroup?g.bg:'rgba(0,0,0,0.05)',border:`1px solid ${hasColorGroup?g.color+'50':C.border}`,borderRadius:20,padding:'5px 12px',display:'flex',alignItems:'center',gap:5,flexShrink:0 }}>
+        {hasColorGroup && <div style={{ width:7,height:7,borderRadius:'50%',background:g.color }} />}
+        <span style={{ fontSize:11,fontWeight:700,color:hasColorGroup?g.color:C.muted }}>{hasColorGroup ? g.label.split(' ')[0] : 'Staff'}</span>
+      </Tap>
+    </div>
   )
 
   if (live.status === 'countdown') return (
@@ -668,14 +750,14 @@ function CardDeck({ day }) {
 }
 
 // ─── TODAY PAGE ───────────────────────────────────────────────────────────────
-function TodayPage({ myGroup, live, now, onChangeGroup }) {
+function TodayPage({ myGroup, live, now, onChangeGroup, onHelp }) {
   const C = useC()
   const dayIdx = live.dayIdx >= 0 ? live.dayIdx : (now < new Date('2026-07-13') ? 0 : DAYS.length - 1)
   const day = DAYS[dayIdx]
 
   return (
     <div>
-      <NowHero myGroup={myGroup} live={live} onChangeGroup={onChangeGroup} />
+      <NowHero myGroup={myGroup} live={live} onChangeGroup={onChangeGroup} onHelp={onHelp} />
       <div style={{ padding:'16px 0 calc(92px + env(safe-area-inset-bottom,0px))' }}>
         <p style={{ margin:'0 0 10px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>Today</p>
         <CardDeck day={day} />
@@ -1354,6 +1436,7 @@ export default function VBSLeaderHub() {
   const [splash,setSplash] = useState(true)
   const [myGroup,setMyGroup] = useState(() => { try { return localStorage.getItem('rfGroup') || null } catch { return null } })
   const [page,setPage] = useState('today')
+  const [showOnboarding,setShowOnboarding] = useState(false)
   const mockOffset = (() => {
     try {
       const p = new URLSearchParams(window.location.search).get('t')
@@ -1374,7 +1457,15 @@ export default function VBSLeaderHub() {
   const live = getLive(now)
 
   if (splash) return <TC.Provider value={TH}><Splash onDone={()=>setSplash(false)} /></TC.Provider>
-  const saveGroup = g => { try { localStorage.setItem('rfGroup', g) } catch {} setMyGroup(g) }
+  const saveGroup = g => {
+    try { localStorage.setItem('rfGroup', g) } catch {}
+    setMyGroup(g)
+    try { if (!localStorage.getItem('vbsOnboarding')) setShowOnboarding(true) } catch {}
+  }
+  const dismissOnboarding = () => {
+    try { localStorage.setItem('vbsOnboarding','done') } catch {}
+    setShowOnboarding(false)
+  }
   if (!myGroup) return <TC.Provider value={TH}><GroupPicker onSelect={saveGroup} /></TC.Provider>
 
   const activeTheme = (() => {
@@ -1391,12 +1482,13 @@ export default function VBSLeaderHub() {
     <TC.Provider value={activeTheme}>
       <div style={{ background:TH.bg,minHeight:'100vh',color:TH.text,fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",maxWidth:430,margin:'0 auto',position:'relative' }}>
         <div key={page} style={{ animation:'tabFade 220ms cubic-bezier(0.2,0,0,1) both' }}>
-          {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} />}
+          {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} onHelp={()=>setShowOnboarding(true)} />}
           {page==='schedule' && <SchedulePage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} />}
           {page==='coffee'   && <CoffeePage myGroup={myGroup} />}
         </div>
         <BottomNav page={page} setPage={setPage} />
         {changing && <GroupModal myGroup={myGroup} onSelect={g=>{saveGroup(g);setChanging(false)}} onClose={()=>setChanging(false)} />}
+        {showOnboarding && <OnboardingModal onDone={dismissOnboarding} />}
       </div>
     </TC.Provider>
   )
