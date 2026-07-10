@@ -504,12 +504,10 @@ function CardDeck({ day }) {
         paddingLeft:16, paddingRight:16, paddingBottom:4, scrollPaddingLeft:16,
       }}>
 
-        {/* ── Card 1: Bible Point — warm/vivid ── */}
-        <Tap style={{ ...base, color:'#fff' }} onClick={() => setBible(true)}>
-          <div style={{ position:'absolute',inset:0,borderRadius:22,backgroundImage:'url(/bible-point-image.jpg)',backgroundSize:'cover',backgroundPosition:'center',filter:'saturate(1.2) brightness(0.88)',zIndex:0 }} />
-          <div style={{ position:'absolute',inset:0,borderRadius:22,background:'linear-gradient(160deg,rgba(0,0,0,0.28) 0%,rgba(0,0,0,0.52) 100%)',zIndex:1 }} />
+        {/* ── Card 1: Bible Point — amber/red aurora ── */}
+        <Tap style={{ ...base, color:'#fff', background:'radial-gradient(ellipse at 25% 25%, #f0b429 0%, #e05252 58%, #7f1d1d 100%)' }} onClick={() => setBible(true)}>
           <Leaf t={-14} r={-10} rot={45} s={78} op={0.22} />
-          <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',flex:1 }}>
+          <div style={{ position:'relative',display:'flex',flexDirection:'column',flex:1 }}>
             <p style={{ margin:'0 0 3px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Day {day.n} · Bible Point</p>
             <div style={{ display:'flex',alignItems:'center',gap:9,marginBottom:12 }}>
               <img src={BUDDY_IMGS[day.n]} alt={day.buddy} style={{ width:46,height:46,objectFit:'contain',flexShrink:0 }} />
@@ -538,17 +536,15 @@ function CardDeck({ day }) {
             transition:'transform 0.55s cubic-bezier(0.4,0,0.2,1)',
             transform: verseFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
           }}>
-            {/* Front — camp photo, cool-toned */}
+            {/* Front — blue aurora */}
             <div style={{ position:'absolute',inset:0,borderRadius:22,
               backfaceVisibility:'hidden',WebkitBackfaceVisibility:'hidden',
-              overflow:'hidden',
+              overflow:'hidden', background:'radial-gradient(ellipse at 75% 20%, #60a5fa 0%, #3b82f6 45%, #1e3a8a 100%)',
               color:'#fff',display:'flex',flexDirection:'column',padding:'18px 18px 16px' }}>
-              <div style={{ position:'absolute',inset:0,backgroundImage:'url(/memory-verse-image.jpg)',backgroundSize:'cover',backgroundPosition:'center',filter:'hue-rotate(195deg) saturate(0.85) brightness(0.85)',zIndex:0 }} />
-              <div style={{ position:'absolute',inset:0,background:'linear-gradient(160deg,rgba(0,0,0,0.25) 0%,rgba(0,0,0,0.50) 100%)',zIndex:1 }} />
-              <svg viewBox="0 0 60 60" style={{ position:'absolute',top:-10,right:-8,width:72,height:72,opacity:.18,pointerEvents:'none',zIndex:2 }}>
+              <svg viewBox="0 0 60 60" style={{ position:'absolute',top:-10,right:-8,width:72,height:72,opacity:.18,pointerEvents:'none' }}>
                 <path d="M5 55 Q30 5 55 5 Q45 35 5 55Z" fill="white" transform="rotate(30 30 30)"/>
               </svg>
-              <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',flex:1 }}>
+              <div style={{ position:'relative',display:'flex',flexDirection:'column',flex:1 }}>
                 <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Memory Verse</p>
                 <p style={{ margin:'0 0 10px',fontSize:22,fontWeight:800,color:'#fff' }}>{day.verseRef}</p>
                 <p style={{ margin:0,fontSize:13,color:'rgba(255,255,255,0.36)',lineHeight:1.6,flex:1,fontStyle:'italic',filter:'blur(3.5px)',userSelect:'none' }}>{day.verseText}</p>
@@ -570,12 +566,10 @@ function CardDeck({ day }) {
           </div>
         </div>
 
-        {/* ── Card 3: Crew Joke — warm/energetic ── */}
-        <Tap style={{ ...base, color:'#fff' }} onClick={() => !jokeRevealed && setJokeRev(true)}>
-          <div style={{ position:'absolute',inset:0,borderRadius:22,backgroundImage:'url(/crew-joke-image.jpg)',backgroundSize:'cover',backgroundPosition:'center',filter:'hue-rotate(-18deg) saturate(1.35) brightness(0.90)',zIndex:0 }} />
-          <div style={{ position:'absolute',inset:0,borderRadius:22,background:'linear-gradient(160deg,rgba(0,0,0,0.22) 0%,rgba(0,0,0,0.50) 100%)',zIndex:1 }} />
+        {/* ── Card 3: Crew Joke — orange aurora ── */}
+        <Tap style={{ ...base, color:'#fff', background:'radial-gradient(ellipse at 30% 70%, #fb923c 0%, #f97316 45%, #9a3412 100%)' }} onClick={() => !jokeRevealed && setJokeRev(true)}>
           <Leaf b={-12} r={-10} rot={-20} s={74} op={0.22} />
-          <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',flex:1 }}>
+          <div style={{ position:'relative',display:'flex',flexDirection:'column',flex:1 }}>
             <p style={{ margin:'0 0 8px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Crew Joke 😂</p>
             <p style={{ margin:0,fontSize:15,fontWeight:700,lineHeight:1.5,flex:1,color:'#fff' }}>{joke.q}</p>
             <div style={{ background:'rgba(255,255,255,0.14)',borderRadius:12,height:54,
@@ -599,14 +593,12 @@ function CardDeck({ day }) {
           </div>
         </Tap>
 
-        {/* ── Card 4: Icebreaker — desaturated/moody ── */}
-        <div style={{ ...base, cursor:'default', color:'#fff' }}>
-          <div style={{ position:'absolute',inset:0,borderRadius:22,backgroundImage:'url(/crew-icebreaker-image.jpg)',backgroundSize:'cover',backgroundPosition:'center',filter:'saturate(0.45) brightness(0.82) contrast(1.08)',zIndex:0 }} />
-          <div style={{ position:'absolute',inset:0,borderRadius:22,background:'linear-gradient(160deg,rgba(0,0,0,0.30) 0%,rgba(0,0,0,0.55) 100%)',zIndex:1 }} />
-          <svg viewBox="0 0 60 60" style={{ position:'absolute',bottom:-12,right:-12,width:72,height:72,opacity:.18,pointerEvents:'none',zIndex:2 }}>
+        {/* ── Card 4: Icebreaker — purple aurora ── */}
+        <div style={{ ...base, cursor:'default', color:'#fff', background:'radial-gradient(ellipse at 70% 30%, #c084fc 0%, #9b5cf6 50%, #4c1d95 100%)' }}>
+          <svg viewBox="0 0 60 60" style={{ position:'absolute',bottom:-12,right:-12,width:72,height:72,opacity:.18,pointerEvents:'none' }}>
             <path d="M5 55 Q30 5 55 5 Q45 35 5 55Z" fill="white"/>
           </svg>
-          <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',flex:1 }}>
+          <div style={{ position:'relative',display:'flex',flexDirection:'column',flex:1 }}>
             <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Crew Icebreaker ❓</p>
             <p style={{ margin:0,fontSize:15,fontWeight:700,lineHeight:1.6,flex:1,color:'#fff',
               opacity:iceOut?0:1, transform:iceOut?'scale(0.94) rotate(-1.5deg)':'scale(1)',
@@ -619,12 +611,10 @@ function CardDeck({ day }) {
           </div>
         </div>
 
-        {/* ── Card 5: Leader Tip — green/nature ── */}
-        <div style={{ ...base, color:'#fff', cursor:'default' }}>
-          <div style={{ position:'absolute',inset:0,borderRadius:22,backgroundImage:'url(/leader-tip-image.jpg)',backgroundSize:'cover',backgroundPosition:'center',filter:'hue-rotate(82deg) saturate(1.1) brightness(0.86)',zIndex:0 }} />
-          <div style={{ position:'absolute',inset:0,borderRadius:22,background:'linear-gradient(160deg,rgba(0,0,0,0.26) 0%,rgba(0,0,0,0.52) 100%)',zIndex:1 }} />
+        {/* ── Card 5: Leader Tip — green aurora ── */}
+        <div style={{ ...base, color:'#fff', cursor:'default', background:'radial-gradient(ellipse at 40% 65%, #4ade80 0%, #16a34a 50%, #14532d 100%)' }}>
           <Leaf t={-10} l={-10} rot={120} s={66} op={0.22} />
-          <div style={{ position:'relative',zIndex:2,display:'flex',flexDirection:'column',flex:1 }}>
+          <div style={{ position:'relative',display:'flex',flexDirection:'column',flex:1 }}>
             <p style={{ margin:'0 0 10px',fontSize:8,fontWeight:700,letterSpacing:'.10em',textTransform:'uppercase',color:'rgba(255,255,255,0.52)' }}>Leader Tip 🌿</p>
             <p style={{ margin:'0 0 8px',fontSize:28 }}>{TIPS[tipIdx].icon}</p>
             <p style={{ margin:0,fontSize:14,fontWeight:600,lineHeight:1.6,flex:1,color:'#fff' }}>{TIPS[tipIdx].tip}</p>
