@@ -723,69 +723,312 @@ function CardDeck({ day }) {
   )
 }
 
-// ─── HOME SCREEN PROMPT + GUIDE ───────────────────────────────────────────────
-function useHomeScreenState() {
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone
-  const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
-  const isAndroid    = /Android/.test(navigator.userAgent)
-  const isSafari     = isIOS && /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS|OPiOS/.test(navigator.userAgent)
-  const iosNotSafari = isIOS && !isSafari
-  const iosVersionMatch = navigator.userAgent.match(/OS (\d+)[_ ]/)
-  const iosVersion   = iosVersionMatch ? parseInt(iosVersionMatch[1]) : 0
-  const isIOS26Plus  = isIOS && iosVersion >= 26
-  return { isStandalone, isIOS, isAndroid, isSafari, iosNotSafari, isIOS26Plus }
+// ─── HOME SCREEN ONBOARDING ──────────────────────────────────────────────────
+
+function detectBranch(deferredPrompt) {
+  const ua = navigator.userAgent
+  if (window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone) return 'done'
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream
+  if (isIOS) {
+    const safari = /Safari/.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/.test(ua)
+    if (!safari) return 'ios-other'
+    const m = ua.match(/OS (\d+)[_ ]/)
+    return (m && parseInt(m[1]) >= 26) ? 'ios26' : 'ios-safari'
+  }
+  if (/Android/.test(ua)) return deferredPrompt ? 'android-native' : 'android-manual'
+  return 'desktop'
 }
+
+// ── Illustrations ─────────────────────────────────────────────────────────────
+
+const G = '#16a34a'
+const GB = 'rgba(22,163,74,0.13)'
+const ILLSTYLE = { width:'100%', display:'block', borderRadius:10 }
+
+function IllIOS26Step1() {
+  return (
+    <svg viewBox="0 0 300 112" style={ILLSTYLE}>
+      <rect width="300" height="112" fill="#f2f2f7"/>
+      <rect width="300" height="72" fill="white"/>
+      <rect width="300" height="26" fill="#0e5c2a"/>
+      <text x="150" y="17" textAnchor="middle" fontSize="8.5" fill="rgba(255,255,255,0.6)" fontFamily="system-ui" letterSpacing="1">VBS LEADER HUB</text>
+      <line x1="0" y1="72" x2="300" y2="72" stroke="#c8c8cc" strokeWidth="0.5"/>
+      <rect y="72" width="300" height="40" fill="#f2f2f7"/>
+      {/* back */}
+      <text x="24" y="96" textAnchor="middle" fontSize="20" fill="#8e8e93" fontFamily="system-ui">‹</text>
+      {/* URL pill */}
+      <rect x="44" y="80" width="178" height="22" rx="11" fill="rgba(120,120,128,0.12)"/>
+      <text x="133" y="95" textAnchor="middle" fontSize="9" fill="#8e8e93" fontFamily="system-ui">vbs-hub.app</text>
+      {/* ••• highlighted */}
+      <rect x="236" y="79" width="52" height="24" rx="12" fill={GB} stroke={G} strokeWidth="1.5"/>
+      <text x="262" y="95" textAnchor="middle" fontSize="12" fill={G} fontFamily="system-ui" fontWeight="700">•••</text>
+      {/* label + arrow */}
+      <text x="262" y="65" textAnchor="middle" fontSize="8.5" fill={G} fontFamily="system-ui" fontWeight="600">Tap here</text>
+      <line x1="262" y1="67" x2="262" y2="77" stroke={G} strokeWidth="1.3" strokeLinecap="round"/>
+      <path d="M258,74 L262,78 L266,74" fill="none" stroke={G} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IllIOS26Step2() {
+  // ••• popup menu — "Share" is one of the items, highlighted
+  const items = [['Copy Link',false],['Share',true],['Add Bookmark',false],['Find on Page',false]]
+  return (
+    <svg viewBox="0 0 300 132" style={ILLSTYLE}>
+      <rect width="300" height="132" fill="#f2f2f7"/>
+      {/* bottom bar context */}
+      <rect y="104" width="300" height="28" fill="#f2f2f7"/>
+      <rect x="44" y="110" width="178" height="18" rx="9" fill="rgba(120,120,128,0.12)"/>
+      <text x="133" y="122" textAnchor="middle" fontSize="8" fill="#8e8e93" fontFamily="system-ui">vbs-hub.app</text>
+      <rect x="236" y="109" width="46" height="20" rx="10" fill={GB} stroke={G} strokeWidth="1"/>
+      <text x="259" y="122" textAnchor="middle" fontSize="11" fill={G} fontFamily="system-ui" fontWeight="700">•••</text>
+      {/* popup card above the ••• button */}
+      <rect x="148" y="8" width="146" height={14+items.length*22+6} rx="12" fill="white" stroke="rgba(0,0,0,0.1)" strokeWidth="0.8"/>
+      {items.map(([t,hi],i) => {
+        const y = 26 + i*22
+        return (
+          <g key={t}>
+            {hi && <rect x="150" y={y-13} width="142" height="20" rx="5" fill={GB} stroke={G} strokeWidth="0.9"/>}
+            <text x="167" y={y} fontSize="8.5" fill={hi ? G : '#333'} fontFamily="system-ui" fontWeight={hi ? '600' : '400'}>{t}</text>
+            {hi && <text x="152" y={y} fontSize="9" fill={G} fontFamily="system-ui">⬆</text>}
+          </g>
+        )
+      })}
+      {/* arrow + label */}
+      <path d="M140,58 L149,58" stroke={G} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M137,54 L142,58 L137,62" fill="none" stroke={G} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <text x="14" y="51" fontSize="8.5" fill={G} fontFamily="system-ui" fontWeight="600">Tap "Share"</text>
+    </svg>
+  )
+}
+
+function IllAddDialog() {
+  return (
+    <svg viewBox="0 0 300 132" style={ILLSTYLE}>
+      <rect width="300" height="132" fill="#f2f2f7"/>
+      <text x="150" y="118" textAnchor="middle" fontSize="8.5" fill={G} fontFamily="system-ui" fontWeight="600">↑ Look at the very top of your screen</text>
+      {/* dialog at top */}
+      <rect width="300" height="54" fill="#f2f2f7"/>
+      <line x1="0" y1="21" x2="300" y2="21" stroke="rgba(0,0,0,0.08)" strokeWidth="0.5"/>
+      <text x="16" y="15" fontSize="9.5" fill="#8e8e93" fontFamily="system-ui">Cancel</text>
+      <text x="150" y="15" textAnchor="middle" fontSize="9.5" fontWeight="600" fill="#111" fontFamily="system-ui">Add to Home Screen</text>
+      <rect x="252" y="4" width="40" height="18" rx="6" fill={GB} stroke={G} strokeWidth="1.5"/>
+      <text x="272" y="16" textAnchor="middle" fontSize="10.5" fontWeight="700" fill={G} fontFamily="system-ui">Add</text>
+      <rect x="14" y="27" width="24" height="24" rx="6" fill={G}/>
+      <text x="26" y="43" textAnchor="middle" fontSize="13" fontFamily="system-ui">🌿</text>
+      <text x="46" y="37" fontSize="9" fontWeight="600" fill="#111" fontFamily="system-ui">VBS Leader Hub</text>
+      <text x="46" y="48" fontSize="8" fill="#8e8e93" fontFamily="system-ui">vbs-hub.app</text>
+      <line x1="272" y1="23" x2="272" y2="34" stroke={G} strokeWidth="1.3" strokeLinecap="round"/>
+      <path d="M268,31 L272,35 L276,31" fill="none" stroke={G} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IllSafariStep1() {
+  return (
+    <svg viewBox="0 0 300 112" style={ILLSTYLE}>
+      <rect width="300" height="112" fill="#f2f2f7"/>
+      <rect width="300" height="72" fill="white"/>
+      <rect width="300" height="26" fill="#0e5c2a"/>
+      <text x="150" y="17" textAnchor="middle" fontSize="8.5" fill="rgba(255,255,255,0.6)" fontFamily="system-ui" letterSpacing="1">VBS LEADER HUB</text>
+      <line x1="0" y1="72" x2="300" y2="72" stroke="#c8c8cc" strokeWidth="0.5"/>
+      <rect y="72" width="300" height="40" fill="#f2f2f7"/>
+      <text x="28" y="96" textAnchor="middle" fontSize="20" fill="#8e8e93" fontFamily="system-ui">‹</text>
+      <text x="74" y="96" textAnchor="middle" fontSize="20" fill="#d4d4d4" fontFamily="system-ui">›</text>
+      {/* share button highlighted */}
+      <rect x="120" y="78" width="60" height="26" rx="13" fill={GB} stroke={G} strokeWidth="1.5"/>
+      <rect x="141" y="86" width="10" height="8" rx="2" fill="none" stroke={G} strokeWidth="1.2"/>
+      <line x1="146" y1="86" x2="146" y2="80" stroke={G} strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M143,83 L146,80 L149,83" fill="none" stroke={G} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <text x="155" y="93.5" fontSize="7.5" fill={G} fontFamily="system-ui" fontWeight="600">Share</text>
+      <text x="222" y="94" textAnchor="middle" fontSize="13" fill="#8e8e93" fontFamily="system-ui">☐</text>
+      <text x="272" y="93" textAnchor="middle" fontSize="11" fill="#8e8e93" fontFamily="system-ui">[2]</text>
+      {/* label */}
+      <text x="150" y="64" textAnchor="middle" fontSize="8.5" fill={G} fontFamily="system-ui" fontWeight="600">Tap the share button</text>
+      <line x1="150" y1="66" x2="150" y2="75" stroke={G} strokeWidth="1.3" strokeLinecap="round"/>
+      <path d="M146,73 L150,77 L154,73" fill="none" stroke={G} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IllSafariStep2() {
+  return (
+    <svg viewBox="0 0 300 132" style={ILLSTYLE}>
+      <rect width="300" height="132" fill="#f2f2f7"/>
+      <rect x="4" y="6" width="292" height="120" rx="14" fill="white" stroke="rgba(0,0,0,0.07)" strokeWidth="0.5"/>
+      <rect x="128" y="12" width="44" height="4" rx="2" fill="#d0d0d0"/>
+      {[0,1,2,3].map(i => <rect key={i} x={16+i*70} y="22" width="42" height="42" rx="10" fill="#f2f2f7" stroke="rgba(0,0,0,0.05)" strokeWidth="0.5"/>)}
+      <line x1="14" y1="72" x2="286" y2="72" stroke="#f0f0f0" strokeWidth="1"/>
+      <text x="24" y="86" fontSize="9" fill="#444" fontFamily="system-ui">📋  Copy</text>
+      <line x1="14" y1="92" x2="286" y2="92" stroke="#f0f0f0" strokeWidth="1"/>
+      <rect x="6" y="92" width="288" height="22" fill={GB}/>
+      <text x="24" y="107" fontSize="9" fontWeight="600" fill={G} fontFamily="system-ui">＋  Add to Home Screen</text>
+      <rect x="268" y="96" width="20" height="14" rx="4" fill={GB} stroke={G} strokeWidth="0.8"/>
+      <text x="278" y="106" textAnchor="middle" fontSize="8" fill={G} fontFamily="system-ui" fontWeight="700">←</text>
+      <line x1="14" y1="114" x2="286" y2="114" stroke="#f0f0f0" strokeWidth="1"/>
+      <text x="24" y="127" fontSize="9" fill="#bbb" fontFamily="system-ui">🔖  Add Bookmark</text>
+    </svg>
+  )
+}
+
+function IllAndroidStep1() {
+  return (
+    <svg viewBox="0 0 300 112" style={ILLSTYLE}>
+      <rect width="300" height="112" fill="#f2f2f7"/>
+      <rect width="300" height="50" fill="white"/>
+      <line x1="0" y1="50" x2="300" y2="50" stroke="#e0e0e0" strokeWidth="0.5"/>
+      <text x="22" y="32" textAnchor="middle" fontSize="17" fill="#555" fontFamily="system-ui">‹</text>
+      <text x="50" y="32" textAnchor="middle" fontSize="17" fill="#ccc" fontFamily="system-ui">›</text>
+      <rect x="66" y="14" width="190" height="22" rx="11" fill="#f2f2f7"/>
+      <text x="161" y="28" textAnchor="middle" fontSize="9" fill="#8e8e93" fontFamily="system-ui">vbs-hub.app</text>
+      {/* ⋮ highlighted */}
+      <rect x="262" y="13" width="28" height="24" rx="12" fill={GB} stroke={G} strokeWidth="1.5"/>
+      <text x="276" y="28" textAnchor="middle" fontSize="14" fill={G} fontFamily="system-ui" fontWeight="700">⋮</text>
+      <rect y="50" width="300" height="62" fill="#f2f2f7"/>
+      <rect y="50" width="300" height="24" fill="#0e5c2a"/>
+      <text x="150" y="66" textAnchor="middle" fontSize="8.5" fill="rgba(255,255,255,0.6)" fontFamily="system-ui" letterSpacing="1">VBS LEADER HUB</text>
+      <text x="150" y="100" textAnchor="middle" fontSize="8.5" fill={G} fontFamily="system-ui" fontWeight="600">Tap ⋮ in the top-right corner</text>
+      <line x1="276" y1="38" x2="276" y2="44" stroke={G} strokeWidth="1.3" strokeLinecap="round"/>
+      <path d="M272,42 L276,46 L280,42" fill="none" stroke={G} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IllAndroidStep2() {
+  const items = [['New tab',false],['Bookmark',false],['Add to Home Screen',true],['Share…',false],['Settings',false]]
+  return (
+    <svg viewBox="0 0 300 132" style={ILLSTYLE}>
+      <rect width="300" height="132" fill="#f2f2f7"/>
+      <rect x="152" y="6" width="142" height="120" rx="8" fill="white" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8"/>
+      {items.map(([t,hi],i) => {
+        const y = 24 + i*21
+        return (
+          <g key={t}>
+            {hi && <rect x="154" y={y-13} width="138" height="18" rx="4" fill={GB} stroke={G} strokeWidth="0.8"/>}
+            <text x="166" y={y} fontSize="8.5" fill={hi ? G : '#444'} fontFamily="system-ui" fontWeight={hi ? '600' : '400'}>{t}</text>
+          </g>
+        )
+      })}
+      <path d="M144,72 L153,72" stroke={G} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M141,68 L146,72 L141,76" fill="none" stroke={G} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <text x="14" y="65" fontSize="8.5" fill={G} fontFamily="system-ui" fontWeight="600">Tap here</text>
+      <text x="14" y="79" fontSize="8" fill="#999" fontFamily="system-ui">(may say</text>
+      <text x="14" y="90" fontSize="8" fill="#999" fontFamily="system-ui">"Install app")</text>
+    </svg>
+  )
+}
+
+function IllIOSOther() {
+  return (
+    <svg viewBox="0 0 300 112" style={ILLSTYLE}>
+      <rect width="300" height="112" fill="#f2f2f7"/>
+      <rect x="28" y="16" width="100" height="64" rx="14" fill="white" stroke="rgba(0,0,0,0.08)" strokeWidth="0.8"/>
+      <text x="78" y="52" textAnchor="middle" fontSize="30" fontFamily="system-ui">🌐</text>
+      <text x="78" y="70" textAnchor="middle" fontSize="8" fill="#888" fontFamily="system-ui">Your browser</text>
+      <path d="M136,48 L164,48" stroke={G} strokeWidth="2" strokeLinecap="round"/>
+      <path d="M160,44 L166,48 L160,52" fill="none" stroke={G} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <rect x="174" y="16" width="100" height="64" rx="14" fill="white" stroke={G} strokeWidth="1.5"/>
+      <text x="224" y="52" textAnchor="middle" fontSize="30" fontFamily="system-ui">🧭</text>
+      <text x="224" y="70" textAnchor="middle" fontSize="8" fill={G} fontFamily="system-ui" fontWeight="600">Safari</text>
+      <text x="150" y="95" textAnchor="middle" fontSize="8.5" fill="#555" fontFamily="system-ui">Copy the link, open Safari, paste it.</text>
+      <text x="150" y="107" textAnchor="middle" fontSize="8.5" fill="#555" fontFamily="system-ui">Then follow the steps to add it.</text>
+    </svg>
+  )
+}
+
+function IllDesktop() {
+  return (
+    <svg viewBox="0 0 300 100" style={ILLSTYLE}>
+      <rect width="300" height="100" fill="#f2f2f7"/>
+      <text x="150" y="42" textAnchor="middle" fontSize="36" fontFamily="system-ui">📱</text>
+      <text x="150" y="66" textAnchor="middle" fontSize="10" fill="#555" fontFamily="system-ui">Open this page on your phone</text>
+      <text x="150" y="80" textAnchor="middle" fontSize="8.5" fill="#999" fontFamily="system-ui">Safari on iPhone · Chrome on Android</text>
+    </svg>
+  )
+}
+
+// ── Step definitions per branch ───────────────────────────────────────────────
+
+function getSteps(branch) {
+  const dialogStep = { title:'Tap "Add" in the top right', body:'A small dialog appears at the very top of your screen — not the bottom. Look all the way up and tap "Add" in the top-right corner.', Ill:IllAddDialog }
+  switch (branch) {
+    case 'ios26': return [
+      { title:'Tap the ••• button', body:'It\'s on the right side of the compact address bar at the bottom of Safari. Scroll up to the top of the page first if you don\'t see it.', hint:'Don\'t see the bar? Scroll up to the very top of the page.', Ill:IllIOS26Step1 },
+      { title:'Tap "Share"', body:'A small popup appears with a few options. Tap "Share" — it has an arrow icon next to it.', Ill:IllIOS26Step2 },
+      { title:'Tap "Add to Home Screen"', body:'The share sheet slides up from the bottom. Scroll down in that sheet — "Add to Home Screen" isn\'t always at the top. Tap it when you see it.', Ill:IllSafariStep2 },
+      dialogStep,
+    ]
+    case 'ios-safari': return [
+      { title:'Tap the share button', body:'It\'s the box with an arrow pointing up, at the bottom center of Safari. Scroll to the top of the page first if the toolbar is hidden.', hint:'Opened from a text or email? Tap the Safari icon (bottom-right of the in-app browser) to open in full Safari first.', Ill:IllSafariStep1 },
+      { title:'Tap "Add to Home Screen"', body:'A menu slides up from the bottom. Scroll down in that menu — "Add to Home Screen" isn\'t always at the top. Tap it when you see it.', Ill:IllSafariStep2 },
+      dialogStep,
+    ]
+    case 'ios-other': return [
+      { title:'Open this page in Safari', body:'iPhone only lets you add apps to your home screen through Safari. Copy the address from your current browser, open Safari, and paste it there.', Ill:IllIOSOther },
+    ]
+    case 'android-native': return [
+      { title:'Install Leader Hub', body:'Your browser is ready to install it right now. Tap "Install Now" below — it opens instantly like an app, no browser bar needed.', Ill:null, isNativeAndroid:true },
+    ]
+    case 'android-manual': return [
+      { title:'Tap the ⋮ menu', body:'The three-dot menu is in the top-right corner of Chrome. Scroll up if the address bar is hidden — it reappears when you reach the top.', Ill:IllAndroidStep1 },
+      { title:'Tap "Add to Home Screen"', body:'In the menu, look for "Add to Home Screen" or "Install app" — both do the same thing. Tap it.', Ill:IllAndroidStep2 },
+      { title:'Tap "Add" in the prompt', body:'A prompt will appear asking you to confirm. Tap "Add" or "Install" to finish. The app icon will appear on your home screen.', Ill:IllAddDialog },
+    ]
+    default: return [
+      { title:'Open this on your phone', body:'For the best experience, open this page in Safari (iPhone) or Chrome (Android) on your phone, then follow the prompts to add it to your home screen.', Ill:IllDesktop },
+    ]
+  }
+}
+
+// ── HomeScreenGate — fullscreen first-launch gate ────────────────────────────
+
+function HomeScreenGate({ onStart, onLater }) {
+  const C = useC()
+  useEffect(() => {
+    window.scrollTo({ top:0, behavior:'instant' })
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.55)', zIndex:400, display:'flex', alignItems:'flex-end', backdropFilter:'blur(4px)', WebkitBackdropFilter:'blur(4px)' }}>
+      <div style={{ background:C.surface, width:'100%', maxWidth:430, margin:'0 auto', borderRadius:'24px 24px 0 0', padding:`32px 24px calc(36px + env(safe-area-inset-bottom,0px))`, animation:'fadeUp 0.32s cubic-bezier(0.2,0,0,1) both' }}>
+        <div style={{ textAlign:'center', marginBottom:20 }}>
+          <div style={{ display:'inline-flex', width:68, height:68, borderRadius:18, background:C.accentBg, border:`1px solid ${C.accentBdr}`, alignItems:'center', justifyContent:'center', fontSize:32 }}>🌿</div>
+        </div>
+        <h2 style={{ margin:'0 0 10px', fontSize:22, fontWeight:700, color:C.text, textAlign:'center', lineHeight:1.25 }}>Save this to your home screen</h2>
+        <p style={{ margin:'0 0 28px', fontSize:14, color:C.muted, textAlign:'center', lineHeight:1.65 }}>You'll need it every morning this week. It takes about 10 seconds and you only do it once.</p>
+        <Tap onClick={onStart} style={{ background:C.accent, borderRadius:14, padding:'16px', textAlign:'center', marginBottom:12 }}>
+          <span style={{ fontSize:15, fontWeight:700, color:'#fff' }}>Let's add it →</span>
+        </Tap>
+        <Tap onClick={onLater} style={{ textAlign:'center', padding:'10px' }}>
+          <span style={{ fontSize:13, color:C.mutedLt }}>Remind me later</span>
+        </Tap>
+      </div>
+    </div>
+  )
+}
+
+// ── HomeScreenGuide — illustrated step-by-step sheet ─────────────────────────
 
 function HomeScreenGuide({ onDone, onSkip, deferredPrompt, setDeferredPrompt }) {
   const C = useC()
-  const { isAndroid, isSafari, iosNotSafari, isIOS26Plus } = useHomeScreenState()
+  const branch = detectBranch(deferredPrompt)
+  const steps  = getSteps(branch)
   const [step, setStep] = useState(0)
 
-  const androidNative = isAndroid && !!deferredPrompt
+  useEffect(() => { window.scrollTo({ top:0, behavior:'instant' }) }, [])
 
-  const steps = (() => {
-    if (androidNative) return [
-      { emoji:'⬇', title:'Install Leader Hub', body:"Your browser is ready to install it. Tap below and it'll open instantly like an app — no browser bar, no URL.", action:true },
-      { emoji:'✅', title:"You're all set!", body:"The app is installed. Open it from your home screen every day this week — no browser, no URL needed.", done:true },
-    ]
-    if (isAndroid) return [
-      { emoji:'⋮', title:'Open the browser menu', body:'Tap the three-dot menu (⋮) at the top right of Chrome, or the menu icon in your browser.' },
-      { emoji:'➕', title:'Find "Add to Home Screen"', body:'Look for "Add to Home Screen" or "Install app" in the menu and tap it. The exact wording depends on your browser.' },
-      { emoji:'✅', title:'Confirm', body:'Tap "Add" or "Install" when prompted. The app will be on your home screen — open it from there every day this week.' },
-    ]
-    if (isSafari && isIOS26Plus) return [
-      { emoji:'···', title:'Open the Safari menu', body:"At the bottom of Safari, find the ••• button (it's near the address bar). Tap it to open the menu." },
-      { emoji:'➕', title:'Tap "Add to Home Screen"', body:'In the menu, tap "Add to Home Screen". If you don\'t see it, tap the Share button (↑) instead and look for "Add to Home Screen" in that list.' },
-      { emoji:'✅', title:'Tap Add', body:'Tap "Add" in the top right corner. The app will be on your home screen — open it from there every day this week.' },
-    ]
-    if (isSafari) return [
-      { emoji:'□↑', title:'Tap the Share button', body:'Find the Share icon at the bottom of Safari — it looks like a box with an arrow pointing up.' },
-      { emoji:'➕', title:'Add to Home Screen', body:'Scroll down in the share sheet and tap "Add to Home Screen".' },
-      { emoji:'✅', title:'Tap Add', body:'Hit Add in the top right corner. The app will be on your home screen — open it from there every day this week.' },
-    ]
-    if (iosNotSafari) return [
-      { emoji:'🧭', title:'Switch to Safari', body:'This only works in Safari. Copy the URL from your address bar, open Safari, and paste it there.' },
-      { emoji:'□↑', title:'Tap the Share button', body:'Find the Share icon in Safari\'s bottom toolbar — it looks like a box with an arrow pointing up.' },
-      { emoji:'➕', title:'Add to Home Screen', body:'Scroll down and tap "Add to Home Screen", then tap Add in the top right.' },
-    ]
-    // desktop
-    return [
-      { emoji:'📱', title:'Open on your phone', body:'For the best experience, visit this page in Safari (iPhone) or Chrome (Android) on your phone.' },
-      { emoji:'□↑', title:'Add to your home screen', body:'On iPhone: tap Share → "Add to Home Screen". On Android: tap ⋮ → "Add to Home Screen".' },
-    ]
-  })()
+  if (branch === 'done') { onDone(); return null }
 
-  const cur     = steps[step]
-  const isLast  = step === steps.length - 1
-  const total   = steps.length
+  const cur    = steps[step]
+  const isLast = step === steps.length - 1
 
   const handleMain = async () => {
-    if (cur.done) { onDone(); return }
-    if (cur.action && deferredPrompt) {
+    if (cur.isNativeAndroid && deferredPrompt) {
       deferredPrompt.prompt()
       const { outcome } = await deferredPrompt.userChoice
       setDeferredPrompt(null)
-      if (outcome === 'accepted') { setStep(s => s + 1); return }
+      if (outcome === 'accepted') { onDone(); return }
     }
     if (isLast) { onDone(); return }
     setStep(s => s + 1)
@@ -793,37 +1036,40 @@ function HomeScreenGuide({ onDone, onSkip, deferredPrompt, setDeferredPrompt }) 
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:300, display:'flex', alignItems:'flex-end', backdropFilter:'blur(3px)', WebkitBackdropFilter:'blur(3px)' }}>
-      <div onClick={e => e.stopPropagation()} style={{ background:C.surface, width:'100%', maxWidth:430, margin:'0 auto', borderRadius:'24px 24px 0 0', padding:`28px 22px calc(32px + env(safe-area-inset-bottom,0px))`, animation:'fadeUp 0.3s ease both', border:`1px solid ${C.border}`, maxHeight:'calc(90vh - env(safe-area-inset-top,0px))', overflowY:'auto' }}>
-
-        {/* Step counter */}
-        <div style={{ display:'flex', justifyContent:'center', gap:5, marginBottom:22 }}>
-          {steps.map((_, i) => (
-            <div key={i} style={{ width:i===step?18:6, height:6, borderRadius:99, background:i<=step?C.accent:C.border, transition:'all 0.3s ease' }} />
-          ))}
-        </div>
-
-        <div style={{ fontSize:48, textAlign:'center', marginBottom:14, lineHeight:1 }}>{cur.emoji}</div>
-        <h2 style={{ margin:'0 0 10px', fontSize:22, fontWeight:700, color:C.text, textAlign:'center' }}>{cur.title}</h2>
-        <p style={{ margin:'0 0 24px', fontSize:15, color:C.muted, textAlign:'center', lineHeight:1.65 }}>{cur.body}</p>
-
+      <div onClick={e => e.stopPropagation()} style={{ background:C.surface, width:'100%', maxWidth:430, margin:'0 auto', borderRadius:'24px 24px 0 0', padding:`24px 20px calc(28px + env(safe-area-inset-bottom,0px))`, animation:'fadeUp 0.3s ease both', maxHeight:'92vh', overflowY:'auto' }}>
+        {steps.length > 1 && (
+          <div style={{ display:'flex', justifyContent:'center', gap:5, marginBottom:18 }}>
+            {steps.map((_,i) => (
+              <div key={i} style={{ width:i===step?18:6, height:6, borderRadius:99, background:i<=step?C.accent:C.border, transition:'all 0.3s ease' }} />
+            ))}
+          </div>
+        )}
+        {cur.Ill && (
+          <div style={{ marginBottom:16, borderRadius:10, overflow:'hidden', border:`1px solid ${C.border}` }}>
+            <cur.Ill />
+          </div>
+        )}
+        <h3 style={{ margin:'0 0 8px', fontSize:18, fontWeight:700, color:C.text }}>{cur.title}</h3>
+        <p style={{ margin:'0 0 6px', fontSize:14, color:C.muted, lineHeight:1.65 }}>{cur.body}</p>
+        {cur.hint
+          ? <p style={{ margin:'0 0 18px', fontSize:12, color:C.mutedLt, lineHeight:1.55, borderLeft:`2px solid ${C.border}`, paddingLeft:10 }}>{cur.hint}</p>
+          : <div style={{ marginBottom:18 }} />
+        }
         <div style={{ display:'flex', gap:8 }}>
-          {step > 0 && !cur.done && (
-            <Tap onClick={() => setStep(s => s - 1)} style={{ padding:'13px 18px', borderRadius:12, border:`1px solid ${C.border}`, textAlign:'center' }}>
+          {step > 0 && (
+            <Tap onClick={() => setStep(s => s-1)} style={{ padding:'13px 18px', borderRadius:12, border:`1px solid ${C.border}`, textAlign:'center' }}>
               <span style={{ fontSize:14, color:C.muted }}>Back</span>
             </Tap>
           )}
           <Tap onClick={handleMain} style={{ flex:1, padding:'14px', borderRadius:12, background:C.accent, textAlign:'center' }}>
             <span style={{ fontSize:15, fontWeight:700, color:'#fff' }}>
-              {cur.done ? 'Done 🎉' : cur.action ? '⬇ Install Now' : isLast ? 'All done ✓' : 'Next →'}
+              {cur.isNativeAndroid ? '⬇ Install Now' : isLast ? 'Done 🎉' : 'Next →'}
             </span>
           </Tap>
         </div>
-
-        {!cur.done && (
-          <Tap onClick={onSkip} style={{ marginTop:12, textAlign:'center' }}>
-            <span style={{ fontSize:13, color:C.mutedLt }}>I'll do this later</span>
-          </Tap>
-        )}
+        <Tap onClick={onSkip} style={{ marginTop:10, textAlign:'center' }}>
+          <span style={{ fontSize:12, color:C.mutedLt }}>I'll do this later</span>
+        </Tap>
       </div>
     </div>
   )
@@ -831,13 +1077,13 @@ function HomeScreenGuide({ onDone, onSkip, deferredPrompt, setDeferredPrompt }) 
 
 function HomeScreenBanner({ onOpen, done }) {
   const C = useC()
-  const { isStandalone } = useHomeScreenState()
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone
   if (isStandalone || done) return null
   return (
     <Tap onClick={onOpen} style={{ margin:'12px 16px 0', background:C.accentBg, border:`1.5px solid ${C.accentBdr}`, borderRadius:14, padding:'11px 14px', display:'flex', alignItems:'center', gap:10 }}>
       <span style={{ fontSize:20, flexShrink:0 }}>📱</span>
       <div style={{ flex:1, minWidth:0 }}>
-        <p style={{ margin:0, fontSize:13, fontWeight:700, color:C.accent }}>Tap to save it to your home screen</p>
+        <p style={{ margin:0, fontSize:13, fontWeight:700, color:C.accent }}>Add to your home screen</p>
         <p style={{ margin:0, fontSize:11, color:C.accent, opacity:0.7 }}>Keep this close all week</p>
       </div>
       <span style={{ fontSize:13, color:C.accent, fontWeight:700, flexShrink:0 }}>→</span>
@@ -1673,6 +1919,8 @@ export default function VBSLeaderHub() {
   const [myGroup,setMyGroup] = useState(() => { try { return localStorage.getItem('rfGroup') || null } catch { return null } })
   const [page,setPage] = useState('today')
   const [homeGuideOpen,setHomeGuideOpen] = useState(false)
+  const [homeGateOpen,setHomeGateOpen] = useState(false)
+  const [homeGateSeen,setHomeGateSeen] = useState(() => { try { return !!localStorage.getItem('vbsHomeGateSeen') } catch { return false } })
   const [homeScreenDone,setHomeScreenDone] = useState(() => { try { return !!localStorage.getItem('vbsHomeScreen') } catch { return false } })
   const [deferredPrompt,setDeferredPrompt] = useState(null)
   const mockOffset = (() => {
@@ -1695,11 +1943,18 @@ export default function VBSLeaderHub() {
 
   useEffect(() => {
     const handler = e => { e.preventDefault(); setDeferredPrompt(e) }
-    const installed = () => { try { localStorage.setItem('vbsHomeScreen','done') } catch {} ; setHomeScreenDone(true); setHomeGuideOpen(false) }
+    const installed = () => { try { localStorage.setItem('vbsHomeScreen','done') } catch {} ; setHomeScreenDone(true); setHomeGuideOpen(false); setHomeGateOpen(false) }
     window.addEventListener('beforeinstallprompt', handler)
     window.addEventListener('appinstalled', installed)
     return () => { window.removeEventListener('beforeinstallprompt', handler); window.removeEventListener('appinstalled', installed) }
   }, [])
+
+  useEffect(() => {
+    if (myGroup && !homeScreenDone && !homeGateSeen) {
+      const t = setTimeout(() => setHomeGateOpen(true), 400)
+      return () => clearTimeout(t)
+    }
+  }, [myGroup])
 
   const live = getLive(now)
 
@@ -1713,6 +1968,12 @@ export default function VBSLeaderHub() {
     setHomeScreenDone(true)
     setHomeGuideOpen(false)
   }
+  const dismissGate = () => {
+    try { localStorage.setItem('vbsHomeGateSeen','y') } catch {}
+    setHomeGateSeen(true)
+    setHomeGateOpen(false)
+  }
+  const startGuide = () => { setHomeGateOpen(false); setHomeGuideOpen(true) }
   if (!myGroup) return <TC.Provider value={TH}><GroupPicker onSelect={saveGroup} /></TC.Provider>
 
   const activeTheme = (() => {
@@ -1735,6 +1996,7 @@ export default function VBSLeaderHub() {
         </div>
         <BottomNav page={page} setPage={setPage} />
         {changing && <GroupModal myGroup={myGroup} onSelect={g=>{saveGroup(g);setChanging(false)}} onClose={()=>setChanging(false)} />}
+        {homeGateOpen && <HomeScreenGate onStart={startGuide} onLater={dismissGate} />}
         {homeGuideOpen && <HomeScreenGuide onDone={dismissHomeGuide} onSkip={()=>setHomeGuideOpen(false)} deferredPrompt={deferredPrompt} setDeferredPrompt={setDeferredPrompt} />}
       </div>
     </TC.Provider>
