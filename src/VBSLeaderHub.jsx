@@ -1226,34 +1226,34 @@ function SchedulePage({ myGroup, live, now, onChangeGroup, preschoolSub, onToggl
                   const clr    = slot.allGroups ? GREEN : C.accent
 
                   if (isPast) return (
-                    <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5 }}>
+                    <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
                       <div style={{ width:20, height:20, borderRadius:'50%', background:clr, display:'flex', alignItems:'center', justifyContent:'center', border:`2px solid ${C.surface}` }}>
                         <span style={{ fontSize:9, lineHeight:1, color:'#fff' }}>✓</span>
                       </div>
-                      <span style={{ fontSize:7, color:clr, fontWeight:700, whiteSpace:'nowrap' }}>{fmtTime(slot.start)}</span>
+                      <span style={{ fontSize:9, color:clr, fontWeight:700, whiteSpace:'nowrap' }}>{fmtTime(slot.start)}</span>
                     </div>
                   )
 
                   if (isCur) return (
-                    <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5 }}>
+                    <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
                       <div style={{ position:'relative', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center' }}>
                         <div style={{ position:'absolute', top:-4, left:-4, right:-4, bottom:-4, borderRadius:'50%', background:hexToRgba(C.accent, 0.18), animation:'livePulse 2s ease infinite' }} />
                         <div style={{ width:28, height:28, borderRadius:'50%', background:C.accent, border:`3px solid ${C.surface}`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', zIndex:1 }}>
                           <div style={{ width:8, height:8, borderRadius:'50%', background:'#fff' }} />
                         </div>
                       </div>
-                      <span style={{ fontSize:7, color:C.accent, fontWeight:800 }}>NOW</span>
+                      <span style={{ fontSize:9, color:C.accent, fontWeight:800 }}>NOW</span>
                     </div>
                   )
 
                   return (
-                    <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5 }}>
+                    <div key={i} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
                       <div style={{
                         width:20, height:20, borderRadius:'50%',
                         background: slot.allGroups ? 'rgba(22,163,74,0.08)' : C.surfaceHi,
                         border: `2px ${slot.allGroups ? 'dashed' : 'solid'} ${slot.allGroups ? 'rgba(22,163,74,0.35)' : C.border}`
                       }} />
-                      <span style={{ fontSize:7, color:slot.allGroups ? GREEN : C.mutedLt, fontWeight:600, whiteSpace:'nowrap' }}>{fmtTime(slot.start)}</span>
+                      <span style={{ fontSize:9, color:slot.allGroups ? GREEN : C.mutedLt, fontWeight:600, whiteSpace:'nowrap' }}>{fmtTime(slot.start)}</span>
                     </div>
                   )
                 })}
@@ -1294,7 +1294,7 @@ function SchedulePage({ myGroup, live, now, onChangeGroup, preschoolSub, onToggl
         {/* Up Next */}
         {nextSlot && (
           <div style={{ marginBottom:10 }}>
-            <p style={{ margin:'0 0 7px', fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:C.mutedLt }}>Up next</p>
+            <p style={{ margin:'0 0 7px', fontSize:11, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:C.mutedLt }}>Up next</p>
             <div style={{ background:C.surface, borderRadius:14, padding:'12px 14px', border:`1px solid ${C.border}`, display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ width:42, height:42, borderRadius:11, background:nextSlot.allGroups ? GREEN_BG : C.accentBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:20 }}>
                 {dEmoji(nextSlot, nextIdx)}
@@ -1320,7 +1320,7 @@ function SchedulePage({ myGroup, live, now, onChangeGroup, preschoolSub, onToggl
         {/* Later */}
         {laterList.length > 0 && (
           <div style={{ marginBottom:10 }}>
-            <p style={{ margin:'0 0 7px', fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:C.mutedLt }}>Later</p>
+            <p style={{ margin:'0 0 7px', fontSize:11, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:C.mutedLt }}>Later</p>
             <div style={{ background:C.surface, borderRadius:14, border:`1px solid ${C.border}`, overflow:'hidden' }}>
               {laterList.map((slot, idx) => renderRow(slot, laterBaseIdx + idx, idx === laterList.length - 1))}
             </div>
@@ -1355,7 +1355,7 @@ function CoffeePage({ myGroup }) {
   const [size, setSize]       = useState('')
   const [milk, setMilk]       = useState('')
   const [syrups,setSyrups]    = useState([])   // [{ name, sf }]
-  const [name, setName]       = useState('')
+  const [name, setName]       = useState(() => { try { return localStorage.getItem('vbsCoffeeName') || '' } catch { return '' } })
   const [pickup,setPickup]    = useState(true)
   const [deliverTo,setDeliverTo] = useState(() =>
     (!myGroup || myGroup === 'none') ? '' : (GROUPS[myGroup]?.delivery || '')
@@ -1479,12 +1479,12 @@ function CoffeePage({ myGroup }) {
       <div style={{ padding:'0 16px calc(100px + env(safe-area-inset-bottom,0px))' }}>
         <h3 style={{ margin:'14px 0 4px', fontSize:22, fontWeight:700, color:C.text }}>Choose your drink</h3>
         <p style={{ margin:'0 0 4px', fontSize:13, color:C.muted }}>
-          {isCold ? 'All 16 oz' : 'You\'ll pick a size next'}
+          {isCold ? 'All 16 oz' : 'All 16 oz · customize on the next screen'}
         </p>
         <StepDots />
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
           {MENU[cat].items.map(item => (
-            <Tap key={item} onClick={() => { setDrink(item); setSize(''); setMilk(''); setSyrups([]); setShowSyrups(false); setStep(3) }}
+            <Tap key={item} onClick={() => { setDrink(item); setSize('16 oz'); setMilk(''); setSyrups([]); setShowSyrups(false); setStep(3) }}
               style={{ background:C.surface, border:`1.5px solid ${C.border}`, borderRadius:12, padding:'14px 13px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <p style={{ margin:0, fontSize:13, fontWeight:600, color:C.text, flex:1, lineHeight:1.3 }}>{item}</p>
               <ChevronRight size={14} color={C.muted} style={{ flexShrink:0, marginLeft:4 }} />
@@ -1517,21 +1517,6 @@ function CoffeePage({ myGroup }) {
           <h3 style={{ margin:'14px 0 2px', fontSize:22, fontWeight:700, color:C.text }}>{isIced ? `Iced ${drink}` : drink}</h3>
           <p style={{ margin:'0 0 4px', fontSize:13, color:C.muted }}>Customize your order</p>
           <StepDots />
-
-          {/* Size */}
-          {needsSize && (
-            <>
-              <FL3>Size</FL3>
-              <div style={{ display:'flex', gap:8 }}>
-                {SIZES.map(s => (
-                  <Tap key={s} onClick={() => setSize(s)}
-                    style={{ flex:1, padding:'12px 6px', borderRadius:10, border:`1.5px solid ${size===s?C.accent:C.border}`, background:size===s?C.accentBg:C.surface, textAlign:'center' }}>
-                    <span style={{ fontSize:14, fontWeight:700, color:size===s?C.accent:C.muted }}>{s}</span>
-                  </Tap>
-                ))}
-              </div>
-            </>
-          )}
 
           {/* Milk */}
           {showMilk && (
@@ -1628,7 +1613,7 @@ function CoffeePage({ myGroup }) {
           {/* Name */}
           <FL4>Your name</FL4>
           <SCard style={{ padding:'12px 14px' }}>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter your first and last name"
+            <input value={name} onChange={e => { setName(e.target.value); try { localStorage.setItem('vbsCoffeeName', e.target.value) } catch {} }} placeholder="Enter your first and last name"
               style={{ width:'100%', background:'transparent', border:'none', outline:'none', fontSize:16, color:C.text, fontFamily:'inherit', padding:0 }} />
           </SCard>
 
