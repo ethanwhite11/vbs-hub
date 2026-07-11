@@ -376,79 +376,6 @@ function GroupModal({ myGroup, onSelect, onClose }) {
 }
 
 // ─── ONBOARDING MODAL ────────────────────────────────────────────────────────
-const ONBOARD_STEPS = [
-  { emoji:'📱', title:'Save to Your Home Screen', body:null, isHomeScreen:true },
-  { emoji:'🌿', title:'Welcome to Leader Hub', body:"Your VBS command center for the whole week. Here's a quick look at what's inside — takes about 30 seconds." },
-  { emoji:'🏠', title:'Today Tab', body:'Your daily guide. Bible point, memory verse, icebreaker, crew reminders, and your animated daily buddy — all in one card deck. Swipe through each morning.' },
-  { emoji:'📅', title:'Schedule Tab', body:"Your group's full station rotation with live tracking. A real-time countdown shows exactly what's up next and where to go." },
-  { emoji:'☕', title:'The Café @ Gateway', body:'Order a $2 drink from The Café. Pick your drink, customize it, and send the order straight from your phone via text.' },
-]
-
-function OnboardingModal({ onDone }) {
-  const C = useC()
-  const [step, setStep] = useState(0)
-  const total = ONBOARD_STEPS.length
-  const cur = ONBOARD_STEPS[step]
-  const isLast = step === total - 1
-
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-  const isAndroid = /Android/.test(navigator.userAgent)
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone
-  const iosVersionMatch = navigator.userAgent.match(/OS (\d+)[_ ]/)
-  const isIOS26Plus = isIOS && iosVersionMatch ? parseInt(iosVersionMatch[1]) >= 26 : false
-
-  const homeBody = isStandalone
-    ? "You're already running from your home screen — you're all set! 🎉"
-    : isIOS && isIOS26Plus
-    ? 'In Safari, look for the ••• and Share (↑) buttons in the bottom toolbar. Tap the Share button, then tap "Add to Home Screen".'
-    : isIOS
-    ? 'Tap the Share button at the bottom of Safari (the box with an arrow ↑), then tap "Add to Home Screen". It opens instantly like an app.'
-    : isAndroid
-    ? 'Tap the three-dot menu (⋮) at the top right of your browser, then look for "Add to Home Screen" or "Install app".'
-    : 'In your browser menu, look for "Add to Home Screen" or "Install app" to save Leader Hub to your home screen.'
-
-  return (
-    <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:300,display:'flex',alignItems:'flex-end',backdropFilter:'blur(3px)',WebkitBackdropFilter:'blur(3px)' }}>
-      <div style={{ background:C.surface,width:'100%',maxWidth:430,margin:'0 auto',borderRadius:'24px 24px 0 0',padding:`28px 22px calc(32px + env(safe-area-inset-bottom,0px))`,animation:'fadeUp 0.3s ease both',border:`1px solid ${C.border}`,maxHeight:'calc(90vh - env(safe-area-inset-top,0px))',overflowY:'auto' }}>
-        <div style={{ fontSize:52,textAlign:'center',marginBottom:14,lineHeight:1 }}>{cur.emoji}</div>
-        <h2 style={{ margin:'0 0 10px',fontSize:22,fontWeight:700,color:C.text,textAlign:'center' }}>{cur.title}</h2>
-        <p style={{ margin:'0 0 20px',fontSize:15,color:C.muted,textAlign:'center',lineHeight:1.65 }}>
-          {cur.isHomeScreen ? homeBody : cur.body}
-        </p>
-
-        {cur.isHomeScreen && !isStandalone && isIOS && (
-          <div style={{ background:C.accentBg,border:`1px solid ${C.accentBdr}`,borderRadius:10,padding:'10px 14px',marginBottom:16,textAlign:'center' }}>
-            <p style={{ margin:0,fontSize:12,color:C.accent,fontWeight:600 }}>Safari only — won't work in Chrome on iPhone</p>
-          </div>
-        )}
-
-        <div style={{ display:'flex',justifyContent:'center',gap:6,marginBottom:20 }}>
-          {ONBOARD_STEPS.map((_,i) => (
-            <div key={i} style={{ width:i===step?18:6,height:6,borderRadius:99,background:i<=step?C.accent:C.border,transition:'all 0.3s ease' }} />
-          ))}
-        </div>
-
-        <div style={{ display:'flex',gap:8 }}>
-          {step > 0 && (
-            <Tap onClick={()=>setStep(s=>s-1)} style={{ padding:'13px 18px',borderRadius:12,border:`1px solid ${C.border}`,textAlign:'center' }}>
-              <span style={{ fontSize:14,color:C.muted }}>Back</span>
-            </Tap>
-          )}
-          <Tap onClick={isLast ? onDone : ()=>setStep(s=>s+1)}
-            style={{ flex:1,padding:'14px',borderRadius:12,background:C.accent,textAlign:'center' }}>
-            <span style={{ fontSize:15,fontWeight:700,color:'#fff' }}>{isLast ? "Let's go! 🌿" : 'Next →'}</span>
-          </Tap>
-        </div>
-
-        {!isLast && (
-          <Tap onClick={onDone} style={{ marginTop:12,textAlign:'center' }}>
-            <span style={{ fontSize:13,color:C.mutedLt }}>Skip intro</span>
-          </Tap>
-        )}
-      </div>
-    </div>
-  )
-}
 
 // ─── NOW HERO — full-bleed T1, handles safe-area, owns the group badge ────────
 function NowHero({ myGroup, live, onChangeGroup, onHelp, preschoolSub }) {
@@ -809,7 +736,7 @@ function useHomeScreenState() {
   return { isStandalone, isIOS, isAndroid, isSafari, iosNotSafari, isIOS26Plus }
 }
 
-function HomeScreenGuide({ onDone, deferredPrompt, setDeferredPrompt }) {
+function HomeScreenGuide({ onDone, onSkip, deferredPrompt, setDeferredPrompt }) {
   const C = useC()
   const { isAndroid, isSafari, iosNotSafari, isIOS26Plus } = useHomeScreenState()
   const [step, setStep] = useState(0)
@@ -819,23 +746,22 @@ function HomeScreenGuide({ onDone, deferredPrompt, setDeferredPrompt }) {
   const steps = (() => {
     if (androidNative) return [
       { emoji:'⬇', title:'Install Leader Hub', body:"Your browser is ready to install it. Tap below and it'll open instantly like an app — no browser bar, no URL.", action:true },
-      { emoji:'✅', title:"You're all set!", body:'Leader Hub is now on your home screen. Open it from there all week for the fastest access.', done:true },
+      { emoji:'✅', title:"You're all set!", body:"The app is installed. Open it from your home screen every day this week — no browser, no URL needed.", done:true },
     ]
     if (isAndroid) return [
       { emoji:'⋮', title:'Open the browser menu', body:'Tap the three-dot menu (⋮) at the top right of Chrome, or the menu icon in your browser.' },
       { emoji:'➕', title:'Find "Add to Home Screen"', body:'Look for "Add to Home Screen" or "Install app" in the menu and tap it. The exact wording depends on your browser.' },
-      { emoji:'✅', title:'Confirm', body:'Tap "Add" or "Install" when prompted. Leader Hub will appear on your home screen.' },
+      { emoji:'✅', title:'Confirm', body:'Tap "Add" or "Install" when prompted. The app will be on your home screen — open it from there every day this week.' },
     ]
     if (isSafari && isIOS26Plus) return [
-      { emoji:'•••', title:'Find the toolbar', body:'In Safari, look at the bottom toolbar. You\'ll see a ••• button and a Share button (box with arrow ↑) side by side.' },
-      { emoji:'□↑', title:'Tap the Share button', body:'Tap the Share icon — the box with an arrow pointing up — not the ••• button.' },
-      { emoji:'➕', title:'Add to Home Screen', body:'Scroll down in the share sheet and tap "Add to Home Screen".' },
-      { emoji:'✅', title:'Tap Add', body:'Tap Add in the top right corner. Leader Hub will appear on your home screen like a native app.' },
+      { emoji:'···', title:'Open the Safari menu', body:"At the bottom of Safari, find the ••• button (it's near the address bar). Tap it to open the menu." },
+      { emoji:'➕', title:'Tap "Add to Home Screen"', body:'In the menu, tap "Add to Home Screen". If you don\'t see it, tap the Share button (↑) instead and look for "Add to Home Screen" in that list.' },
+      { emoji:'✅', title:'Tap Add', body:'Tap "Add" in the top right corner. The app will be on your home screen — open it from there every day this week.' },
     ]
     if (isSafari) return [
       { emoji:'□↑', title:'Tap the Share button', body:'Find the Share icon at the bottom of Safari — it looks like a box with an arrow pointing up.' },
       { emoji:'➕', title:'Add to Home Screen', body:'Scroll down in the share sheet and tap "Add to Home Screen".' },
-      { emoji:'✅', title:'Tap Add', body:'Hit Add in the top right corner. Leader Hub will appear on your home screen like a native app.' },
+      { emoji:'✅', title:'Tap Add', body:'Hit Add in the top right corner. The app will be on your home screen — open it from there every day this week.' },
     ]
     if (iosNotSafari) return [
       { emoji:'🧭', title:'Switch to Safari', body:'This only works in Safari. Copy the URL from your address bar, open Safari, and paste it there.' },
@@ -866,7 +792,7 @@ function HomeScreenGuide({ onDone, deferredPrompt, setDeferredPrompt }) {
   }
 
   return (
-    <div onClick={onDone} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:300, display:'flex', alignItems:'flex-end', backdropFilter:'blur(3px)', WebkitBackdropFilter:'blur(3px)' }}>
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:300, display:'flex', alignItems:'flex-end', backdropFilter:'blur(3px)', WebkitBackdropFilter:'blur(3px)' }}>
       <div onClick={e => e.stopPropagation()} style={{ background:C.surface, width:'100%', maxWidth:430, margin:'0 auto', borderRadius:'24px 24px 0 0', padding:`28px 22px calc(32px + env(safe-area-inset-bottom,0px))`, animation:'fadeUp 0.3s ease both', border:`1px solid ${C.border}`, maxHeight:'calc(90vh - env(safe-area-inset-top,0px))', overflowY:'auto' }}>
 
         {/* Step counter */}
@@ -894,8 +820,8 @@ function HomeScreenGuide({ onDone, deferredPrompt, setDeferredPrompt }) {
         </div>
 
         {!cur.done && (
-          <Tap onClick={onDone} style={{ marginTop:12, textAlign:'center' }}>
-            <span style={{ fontSize:13, color:C.mutedLt }}>Close</span>
+          <Tap onClick={onSkip} style={{ marginTop:12, textAlign:'center' }}>
+            <span style={{ fontSize:13, color:C.mutedLt }}>I'll do this later</span>
           </Tap>
         )}
       </div>
@@ -903,53 +829,19 @@ function HomeScreenGuide({ onDone, deferredPrompt, setDeferredPrompt }) {
   )
 }
 
-function HomeScreenBanner() {
+function HomeScreenBanner({ onOpen, done }) {
   const C = useC()
-  const [dismissed, setDismissed] = useState(() => {
-    try { return !!localStorage.getItem('vbsHomeScreen') } catch { return false }
-  })
-  const [guideOpen, setGuideOpen]       = useState(false)
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const { isStandalone }                = useHomeScreenState()
-
-  useEffect(() => {
-    const handler = e => { e.preventDefault(); setDeferredPrompt(e) }
-    window.addEventListener('beforeinstallprompt', handler)
-    window.addEventListener('appinstalled', dismiss)
-    return () => { window.removeEventListener('beforeinstallprompt', handler); window.removeEventListener('appinstalled', dismiss) }
-  }, [])
-
-  function dismiss() {
-    try { localStorage.setItem('vbsHomeScreen', 'done') } catch {}
-    setDismissed(true)
-    setGuideOpen(false)
-  }
-
-  if (isStandalone || dismissed) return null
-
+  const { isStandalone } = useHomeScreenState()
+  if (isStandalone || done) return null
   return (
-    <>
-      {/* Compact strip */}
-      <Tap onClick={() => setGuideOpen(true)} style={{ margin:'12px 16px 0', background:C.accentBg, border:`1.5px solid ${C.accentBdr}`, borderRadius:14, padding:'11px 14px', display:'flex', alignItems:'center', gap:10 }}>
-        <span style={{ fontSize:20, flexShrink:0 }}>📱</span>
-        <div style={{ flex:1, minWidth:0 }}>
-          <p style={{ margin:0, fontSize:13, fontWeight:700, color:C.accent }}>Add to Home Screen</p>
-          <p style={{ margin:0, fontSize:11, color:C.accent, opacity:0.7 }}>Tap for step-by-step instructions</p>
-        </div>
-        <span style={{ fontSize:13, color:C.accent, fontWeight:700, flexShrink:0 }}>→</span>
-        <Tap onClick={e => { e.stopPropagation(); dismiss() }} style={{ padding:'4px 6px', marginRight:-4, flexShrink:0 }}>
-          <span style={{ fontSize:14, color:C.accent, opacity:0.5, fontWeight:600 }}>✕</span>
-        </Tap>
-      </Tap>
-
-      {guideOpen && (
-        <HomeScreenGuide
-          onDone={dismiss}
-          deferredPrompt={deferredPrompt}
-          setDeferredPrompt={setDeferredPrompt}
-        />
-      )}
-    </>
+    <Tap onClick={onOpen} style={{ margin:'12px 16px 0', background:C.accentBg, border:`1.5px solid ${C.accentBdr}`, borderRadius:14, padding:'11px 14px', display:'flex', alignItems:'center', gap:10 }}>
+      <span style={{ fontSize:20, flexShrink:0 }}>📱</span>
+      <div style={{ flex:1, minWidth:0 }}>
+        <p style={{ margin:0, fontSize:13, fontWeight:700, color:C.accent }}>Tap to save it to your home screen</p>
+        <p style={{ margin:0, fontSize:11, color:C.accent, opacity:0.7 }}>Keep this close all week</p>
+      </div>
+      <span style={{ fontSize:13, color:C.accent, fontWeight:700, flexShrink:0 }}>→</span>
+    </Tap>
   )
 }
 
@@ -1095,7 +987,7 @@ function BuddyTrail({ dayIdx }) {
 }
 
 // ─── TODAY PAGE ───────────────────────────────────────────────────────────────
-function TodayPage({ myGroup, live, now, onChangeGroup, onHelp, preschoolSub, onToggleSub }) {
+function TodayPage({ myGroup, live, now, onChangeGroup, onHelp, preschoolSub, onToggleSub, onOpenGuide, homeScreenDone }) {
   const C = useC()
   const dayIdx = live.dayIdx >= 0 ? live.dayIdx : (now < new Date('2026-07-13') ? 0 : DAYS.length - 1)
   const day = DAYS[dayIdx]
@@ -1103,7 +995,7 @@ function TodayPage({ myGroup, live, now, onChangeGroup, onHelp, preschoolSub, on
   return (
     <div>
       <NowHero myGroup={myGroup} live={live} onChangeGroup={onChangeGroup} onHelp={onHelp} preschoolSub={preschoolSub} />
-      <HomeScreenBanner />
+      <HomeScreenBanner onOpen={onOpenGuide} done={homeScreenDone} />
       <div style={{ padding:'16px 0 calc(92px + env(safe-area-inset-bottom,0px))' }}>
         <p style={{ margin:'0 0 10px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>Today</p>
         <CardDeck day={day} />
@@ -1780,7 +1672,9 @@ export default function VBSLeaderHub() {
   const [splash,setSplash] = useState(true)
   const [myGroup,setMyGroup] = useState(() => { try { return localStorage.getItem('rfGroup') || null } catch { return null } })
   const [page,setPage] = useState('today')
-  const [showOnboarding,setShowOnboarding] = useState(false)
+  const [homeGuideOpen,setHomeGuideOpen] = useState(false)
+  const [homeScreenDone,setHomeScreenDone] = useState(() => { try { return !!localStorage.getItem('vbsHomeScreen') } catch { return false } })
+  const [deferredPrompt,setDeferredPrompt] = useState(null)
   const mockOffset = (() => {
     try {
       const p = new URLSearchParams(window.location.search).get('t')
@@ -1799,17 +1693,25 @@ export default function VBSLeaderHub() {
 
   useEffect(() => { const t=setInterval(()=>setNow(new Date(Date.now() + mockOffset)),60000); return()=>clearInterval(t) },[mockOffset])
 
+  useEffect(() => {
+    const handler = e => { e.preventDefault(); setDeferredPrompt(e) }
+    const installed = () => { try { localStorage.setItem('vbsHomeScreen','done') } catch {} ; setHomeScreenDone(true); setHomeGuideOpen(false) }
+    window.addEventListener('beforeinstallprompt', handler)
+    window.addEventListener('appinstalled', installed)
+    return () => { window.removeEventListener('beforeinstallprompt', handler); window.removeEventListener('appinstalled', installed) }
+  }, [])
+
   const live = getLive(now)
 
   if (splash) return <TC.Provider value={TH}><Splash onDone={()=>setSplash(false)} /></TC.Provider>
   const saveGroup = g => {
     try { localStorage.setItem('rfGroup', g) } catch {}
     setMyGroup(g)
-    try { if (!localStorage.getItem('vbsOnboarding')) setTimeout(() => setShowOnboarding(true), 15000) } catch {}
   }
-  const dismissOnboarding = () => {
-    try { localStorage.setItem('vbsOnboarding','done') } catch {}
-    setShowOnboarding(false)
+  const dismissHomeGuide = () => {
+    try { localStorage.setItem('vbsHomeScreen','done') } catch {}
+    setHomeScreenDone(true)
+    setHomeGuideOpen(false)
   }
   if (!myGroup) return <TC.Provider value={TH}><GroupPicker onSelect={saveGroup} /></TC.Provider>
 
@@ -1827,13 +1729,13 @@ export default function VBSLeaderHub() {
     <TC.Provider value={activeTheme}>
       <div style={{ background:TH.bg,minHeight:'100vh',color:TH.text,fontFamily:"'Plus Jakarta Sans',system-ui,sans-serif",maxWidth:430,margin:'0 auto',position:'relative' }}>
         <div key={page} style={{ animation:'tabFade 220ms cubic-bezier(0.2,0,0,1) both' }}>
-          {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} onHelp={()=>setShowOnboarding(true)} preschoolSub={preschoolSub} onToggleSub={setPreschoolSub} />}
+          {page==='today'    && <TodayPage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} onHelp={()=>setHomeGuideOpen(true)} preschoolSub={preschoolSub} onToggleSub={setPreschoolSub} onOpenGuide={()=>setHomeGuideOpen(true)} homeScreenDone={homeScreenDone} />}
           {page==='schedule' && <SchedulePage myGroup={myGroup} live={live} now={now} onChangeGroup={()=>setChanging(true)} preschoolSub={preschoolSub} onToggleSub={setPreschoolSub} />}
           {page==='coffee'   && <CoffeePage myGroup={myGroup} />}
         </div>
         <BottomNav page={page} setPage={setPage} />
         {changing && <GroupModal myGroup={myGroup} onSelect={g=>{saveGroup(g);setChanging(false)}} onClose={()=>setChanging(false)} />}
-        {showOnboarding && <OnboardingModal onDone={dismissOnboarding} />}
+        {homeGuideOpen && <HomeScreenGuide onDone={dismissHomeGuide} onSkip={()=>setHomeGuideOpen(false)} deferredPrompt={deferredPrompt} setDeferredPrompt={setDeferredPrompt} />}
       </div>
     </TC.Provider>
   )
