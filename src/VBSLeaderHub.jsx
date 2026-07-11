@@ -980,14 +980,12 @@ function BuddyTrail({ dayIdx }) {
   return (
     <div style={{ margin:'16px 16px 0', position:'relative', height:H, borderRadius:20, overflow:'hidden' }}>
 
-      {/* Parallax background */}
+      {/* Background — pans left→right across the full scroll range */}
       <div style={{
-        position:'absolute', top:0, bottom:0,
-        left:-80, right:-80,
+        position:'absolute', inset:0,
         backgroundImage:'url("/Rainforest Falls Background Lo-Res.jpg")',
-        backgroundSize:'cover', backgroundPosition:'center',
-        transform:`translateX(${-bgX * 0.32}px)`,
-        willChange:'transform',
+        backgroundSize:'cover',
+        backgroundPosition:`${Math.min(100, (bgX / ((DAYS.length - 1) * (ITEM_W + GAP))) * 100)}% center`,
       }} />
 
       {/* Dark gradient — heavier at bottom so labels are readable */}
