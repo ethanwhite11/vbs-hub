@@ -10,6 +10,7 @@ const GCSS = `
   @keyframes livePulse  { 0%,100%{opacity:1} 50%{opacity:0.35} }
   @keyframes wowReveal  { 0%{opacity:0;transform:scale(0.72) translateY(6px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
   @keyframes iceSpin    { 0%{opacity:1;transform:scale(1) rotate(0deg)} 100%{opacity:0;transform:scale(0.92) rotate(-2deg)} }
+  @keyframes buddyFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
   * { -webkit-tap-highlight-color:transparent; box-sizing:border-box; }
   body { overscroll-behavior:none; margin:0; background:#F2F2F7; font-family:'Plus Jakarta Sans',system-ui,sans-serif; }
   button { font-family:inherit; }
@@ -62,6 +63,15 @@ const BUDDY_IMGS = {
   3: '/Day3-Dottie.png',
   4: '/Day4-Tia.png',
   5: '/Day5-Howie.png',
+}
+
+// ─── BUDDY DATA ───────────────────────────────────────────────────────────────
+const BUDDY_DATA = {
+  1: { animal:'Quetzal',        fact:'Quetzal feathers were considered more precious than gold by ancient civilizations.' },
+  2: { animal:'Glass Frog',     fact:'Glass frogs have transparent skin — you can see their heart beating right through their chest.' },
+  3: { animal:'Ocelot',         fact:'Ocelots are expert climbers and swimmers, equally at home in trees or rivers.' },
+  4: { animal:'Anteater',       fact:'Anteaters have no teeth — they grind up 35,000 insects a day with their muscular stomach.' },
+  5: { animal:'Howler Monkey',  fact:"A howler monkey's roar can be heard up to 3 miles away — the loudest land animal on Earth." },
 }
 
 // ─── SCHEDULE DATA ────────────────────────────────────────────────────────────
@@ -367,11 +377,11 @@ function GroupModal({ myGroup, onSelect, onClose }) {
 
 // ─── ONBOARDING MODAL ────────────────────────────────────────────────────────
 const ONBOARD_STEPS = [
+  { emoji:'📱', title:'Save to Your Home Screen', body:null, isHomeScreen:true },
   { emoji:'🌿', title:'Welcome to Leader Hub', body:"Your VBS command center for the whole week. Here's a quick look at what's inside — takes about 30 seconds." },
   { emoji:'🏠', title:'Today Tab', body:'Your daily guide. Bible point, memory verse, icebreaker, crew reminders, and your animated daily buddy — all in one card deck. Swipe through each morning.' },
   { emoji:'📅', title:'Schedule Tab', body:"Your group's full station rotation with live tracking. A real-time countdown shows exactly what's up next and where to go." },
   { emoji:'☕', title:'The Café @ Gateway', body:'Order a $2 drink from The Café. Pick your drink, customize it, and send the order straight from your phone via text.' },
-  { emoji:'📱', title:'Save to Your Home Screen', body:null, isHomeScreen:true },
 ]
 
 function OnboardingModal({ onDone }) {
@@ -943,30 +953,164 @@ function HomeScreenBanner() {
   )
 }
 
+// ─── BUDDY TRAIL ──────────────────────────────────────────────────────────────
+function BuddyTrail({ dayIdx }) {
+  const C = useC()
+  const scrollRef = useRef(null)
+  const [selected, setSelected] = useState(null)
+  const [bgX, setBgX] = useState(0)
+
+  const ITEM_W = 92
+  const GAP = 10
+  const H = 236
+
+  // Auto-center today's buddy on mount
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    // scrollLeft needed = dayIdx * (ITEM_W + GAP), because the leading spacer is calc(50% - ITEM_W/2)
+    // which already accounts for centering the first item
+    el.scrollLeft = dayIdx * (ITEM_W + GAP)
+  }, [dayIdx])
+
+  const onScroll = () => {
+    if (scrollRef.current) setBgX(scrollRef.current.scrollLeft)
+  }
+
+  return (
+    <div style={{ margin:'16px 16px 0', position:'relative', height:H, borderRadius:20, overflow:'hidden' }}>
+
+      {/* Parallax background */}
+      <div style={{
+        position:'absolute', top:0, bottom:0,
+        left:-80, right:-80,
+        backgroundImage:'url("/Rainforest Falls Background Lo-Res.jpg")',
+        backgroundSize:'cover', backgroundPosition:'center',
+        transform:`translateX(${-bgX * 0.32}px)`,
+        willChange:'transform',
+      }} />
+
+      {/* Dark gradient — heavier at bottom so labels are readable */}
+      <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(4,20,10,0.18) 0%, rgba(4,20,10,0.72) 100%)', pointerEvents:'none' }} />
+
+      {/* Horizontal scroll track */}
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        style={{
+          position:'absolute', inset:0,
+          overflowX:'auto', overflowY:'hidden',
+          scrollbarWidth:'none', WebkitOverflowScrolling:'touch',
+          display:'flex', alignItems:'flex-end',
+          paddingBottom:14,
+        }}
+      >
+        {/* Leading spacer so Day 1 can scroll to center */}
+        <div style={{ flexShrink:0, width:`calc(50% - ${ITEM_W / 2}px)` }} />
+
+        {DAYS.map((day, i) => {
+          const isPast   = i < dayIdx
+          const isToday  = i === dayIdx
+          const isFuture = i > dayIdx
+          const isActive = selected === i
+          const bd = BUDDY_DATA[day.n]
+
+          return (
+            <Tap
+              key={i}
+              onClick={() => setSelected(isActive ? null : i)}
+              style={{
+                flexShrink:0, width:ITEM_W, marginRight:GAP,
+                display:'flex', flexDirection:'column', alignItems:'center',
+                filter: isPast ? 'saturate(0.2) brightness(0.65)' : isFuture ? 'brightness(0.55)' : 'none',
+                opacity: isFuture ? 0.6 : 1,
+                transition:'filter 0.4s ease, opacity 0.4s ease',
+              }}
+            >
+              {/* Buddy image */}
+              <img
+                src={BUDDY_IMGS[day.n]}
+                alt={day.buddy}
+                style={{
+                  height: isToday ? 132 : 76,
+                  objectFit:'contain',
+                  marginBottom:8,
+                  filter: isFuture
+                    ? 'blur(1.5px) drop-shadow(0 3px 8px rgba(0,0,0,0.3))'
+                    : 'drop-shadow(0 4px 14px rgba(0,0,0,0.45))',
+                  animation: isToday ? 'buddyFloat 3.2s ease-in-out infinite' : 'none',
+                  transition:'height 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+                }}
+              />
+
+              {/* Label pill */}
+              <div style={{
+                background: isToday ? 'rgba(255,255,255,0.94)' : 'rgba(255,255,255,0.18)',
+                backdropFilter:'blur(6px)', WebkitBackdropFilter:'blur(6px)',
+                borderRadius:10, padding:'4px 10px', textAlign:'center',
+                border: isToday ? `2px solid ${C.accent}` : '1px solid rgba(255,255,255,0.22)',
+                minWidth:60,
+              }}>
+                {isToday && <p style={{ margin:'0 0 1px', fontSize:8, fontWeight:800, letterSpacing:'.09em', textTransform:'uppercase', color:C.accent }}>Today</p>}
+                {isPast  && <p style={{ margin:'0 0 1px', fontSize:9, fontWeight:700, color:'rgba(255,255,255,0.7)' }}>✓</p>}
+                {isFuture && <p style={{ margin:'0 0 1px', fontSize:8, fontWeight:600, color:'rgba(255,255,255,0.5)', letterSpacing:'.06em' }}>Day {day.n}</p>}
+                <p style={{ margin:0, fontSize:12, fontWeight:700, color: isToday ? '#111' : 'rgba(255,255,255,0.92)', lineHeight:1.2 }}>{day.buddy}</p>
+                {!isPast && <p style={{ margin:'1px 0 0', fontSize:9, color: isToday ? C.muted : 'rgba(255,255,255,0.55)' }}>{bd.animal}</p>}
+              </div>
+            </Tap>
+          )
+        })}
+
+        {/* Trailing spacer */}
+        <div style={{ flexShrink:0, width:`calc(50% - ${ITEM_W / 2}px)` }} />
+      </div>
+
+      {/* Detail overlay — slides up on tap */}
+      {selected !== null && (() => {
+        const day = DAYS[selected]
+        const bd  = BUDDY_DATA[day.n]
+        return (
+          <div
+            key={selected}
+            onClick={() => setSelected(null)}
+            style={{
+              position:'absolute', bottom:0, left:0, right:0,
+              background:'rgba(4,18,10,0.84)',
+              backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)',
+              padding:'10px 16px 16px',
+              borderRadius:'0 0 20px 20px',
+              animation:'fadeUp 0.22s ease both',
+            }}
+          >
+            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
+              <span style={{ fontSize:10, fontWeight:800, textTransform:'uppercase', letterSpacing:'.09em', color:C.accent }}>{bd.animal}</span>
+              <span style={{ fontSize:10, color:'rgba(255,255,255,0.35)' }}>·</span>
+              <span style={{ fontSize:10, color:'rgba(255,255,255,0.5)' }}>{day.label}</span>
+            </div>
+            <p style={{ margin:'0 0 4px', fontSize:14, fontWeight:700, color:'#fff', lineHeight:1.3 }}>{day.point}</p>
+            <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.62)', fontStyle:'italic', lineHeight:1.55 }}>"{bd.fact}"</p>
+          </div>
+        )
+      })()}
+    </div>
+  )
+}
+
 // ─── TODAY PAGE ───────────────────────────────────────────────────────────────
 function TodayPage({ myGroup, live, now, onChangeGroup, onHelp, preschoolSub, onToggleSub }) {
   const C = useC()
   const dayIdx = live.dayIdx >= 0 ? live.dayIdx : (now < new Date('2026-07-13') ? 0 : DAYS.length - 1)
   const day = DAYS[dayIdx]
-  const og = GROUPS.orange
 
   return (
     <div>
       <NowHero myGroup={myGroup} live={live} onChangeGroup={onChangeGroup} onHelp={onHelp} preschoolSub={preschoolSub} />
-      {myGroup === 'orange' && (
-        <div style={{ display:'flex', gap:8, padding:'10px 16px 0' }}>
-          <Tap onClick={() => onToggleSub(1)} style={{ flex:1, padding:'8px', borderRadius:10, border:`1.5px solid ${preschoolSub===1?og.color:C.border}`, background:preschoolSub===1?og.bg:C.surface, textAlign:'center' }}>
-            <span style={{ fontSize:12, fontWeight:700, color:preschoolSub===1?og.color:C.muted }}>P1 · Ages 2–3</span>
-          </Tap>
-          <Tap onClick={() => onToggleSub(2)} style={{ flex:1, padding:'8px', borderRadius:10, border:`1.5px solid ${preschoolSub===2?og.color:C.border}`, background:preschoolSub===2?og.bg:C.surface, textAlign:'center' }}>
-            <span style={{ fontSize:12, fontWeight:700, color:preschoolSub===2?og.color:C.muted }}>P2 · Ages 4–5</span>
-          </Tap>
-        </div>
-      )}
       <HomeScreenBanner />
       <div style={{ padding:'16px 0 calc(92px + env(safe-area-inset-bottom,0px))' }}>
         <p style={{ margin:'0 0 10px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>Today</p>
         <CardDeck day={day} />
+        <p style={{ margin:'20px 0 0',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>This Week</p>
+        <BuddyTrail dayIdx={dayIdx} />
       </div>
     </div>
   )
@@ -1678,7 +1822,7 @@ export default function VBSLeaderHub() {
   const saveGroup = g => {
     try { localStorage.setItem('rfGroup', g) } catch {}
     setMyGroup(g)
-    try { if (!localStorage.getItem('vbsOnboarding')) setShowOnboarding(true) } catch {}
+    try { if (!localStorage.getItem('vbsOnboarding')) setTimeout(() => setShowOnboarding(true), 15000) } catch {}
   }
   const dismissOnboarding = () => {
     try { localStorage.setItem('vbsOnboarding','done') } catch {}
