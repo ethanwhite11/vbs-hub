@@ -1919,8 +1919,6 @@ export default function VBSLeaderHub() {
   const [myGroup,setMyGroup] = useState(() => { try { return localStorage.getItem('rfGroup') || null } catch { return null } })
   const [page,setPage] = useState('today')
   const [homeGuideOpen,setHomeGuideOpen] = useState(false)
-  const [homeGateOpen,setHomeGateOpen] = useState(false)
-  const [homeGateSeen,setHomeGateSeen] = useState(() => { try { return !!localStorage.getItem('vbsHomeGateSeen') } catch { return false } })
   const [homeScreenDone,setHomeScreenDone] = useState(() => { try { return !!localStorage.getItem('vbsHomeScreen') } catch { return false } })
   const [deferredPrompt,setDeferredPrompt] = useState(null)
   const mockOffset = (() => {
@@ -1949,13 +1947,6 @@ export default function VBSLeaderHub() {
     return () => { window.removeEventListener('beforeinstallprompt', handler); window.removeEventListener('appinstalled', installed) }
   }, [])
 
-  useEffect(() => {
-    if (myGroup && !homeScreenDone && !homeGateSeen) {
-      const t = setTimeout(() => setHomeGateOpen(true), 400)
-      return () => clearTimeout(t)
-    }
-  }, [myGroup])
-
   const live = getLive(now)
 
   if (splash) return <TC.Provider value={TH}><Splash onDone={()=>setSplash(false)} /></TC.Provider>
@@ -1968,12 +1959,6 @@ export default function VBSLeaderHub() {
     setHomeScreenDone(true)
     setHomeGuideOpen(false)
   }
-  const dismissGate = () => {
-    try { localStorage.setItem('vbsHomeGateSeen','y') } catch {}
-    setHomeGateSeen(true)
-    setHomeGateOpen(false)
-  }
-  const startGuide = () => { setHomeGateOpen(false); setHomeGuideOpen(true) }
   if (!myGroup) return <TC.Provider value={TH}><GroupPicker onSelect={saveGroup} /></TC.Provider>
 
   const activeTheme = (() => {
@@ -1996,7 +1981,6 @@ export default function VBSLeaderHub() {
         </div>
         <BottomNav page={page} setPage={setPage} />
         {changing && <GroupModal myGroup={myGroup} onSelect={g=>{saveGroup(g);setChanging(false)}} onClose={()=>setChanging(false)} />}
-        {homeGateOpen && <HomeScreenGate onStart={startGuide} onLater={dismissGate} />}
         {homeGuideOpen && <HomeScreenGuide onDone={dismissHomeGuide} onSkip={()=>setHomeGuideOpen(false)} deferredPrompt={deferredPrompt} setDeferredPrompt={setDeferredPrompt} />}
       </div>
     </TC.Provider>
