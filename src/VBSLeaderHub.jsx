@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, createContext, useContext } from "react"
 import { Calendar, Coffee, Home, ChevronDown, ChevronRight, ChevronLeft, RefreshCw } from "lucide-react"
+import { PHOTO_DATA } from "./photoData.js"
 
 // ─── GLOBAL CSS ───────────────────────────────────────────────────────────────
 const GCSS = `
@@ -1232,6 +1233,491 @@ function BuddyTrail({ dayIdx }) {
   )
 }
 
+// ─── PHOTO GALLERY — PROTOTYPE A: FILM STRIP ──────────────────────────────────
+function FilmStrip({ photos, isLastYear }) {
+  const C = useC()
+  const [lightbox, setLightbox] = useState(null)
+  const CARD_W = 148
+  const CARD_H = 196
+
+  return (
+    <>
+      <div style={{
+        display:'flex', overflowX:'auto', overflowY:'hidden',
+        scrollbarWidth:'none', WebkitOverflowScrolling:'touch',
+        scrollSnapType:'x mandatory',
+        paddingLeft:16, paddingRight:16, paddingBottom:4, gap:10,
+      }}>
+        {photos.map((photo, i) => (
+          <Tap key={photo.id} onClick={() => setLightbox(i)} style={{
+            flexShrink:0, width:CARD_W, height:CARD_H,
+            borderRadius:14, overflow:'hidden',
+            scrollSnapAlign:'start', position:'relative',
+            boxShadow:'0 2px 12px rgba(0,0,0,0.12)',
+          }}>
+            <img src={photo.src} alt={photo.caption} style={{
+              width:'100%', height:'100%', objectFit:'cover',
+              filter:isLastYear ? 'sepia(0.38) saturate(0.82) brightness(0.96)' : 'none',
+            }} />
+            <div style={{
+              position:'absolute', bottom:0, left:0, right:0,
+              background:'linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 100%)',
+              padding:'28px 9px 9px',
+            }}>
+              <p style={{ margin:0, fontSize:10, fontWeight:600, color:'rgba(255,255,255,0.92)', lineHeight:1.35 }}>{photo.caption}</p>
+            </div>
+            {isLastYear && (
+              <div style={{ position:'absolute', top:7, left:7, background:'rgba(240,180,41,0.92)', backdropFilter:'blur(4px)', borderRadius:6, padding:'2px 7px' }}>
+                <p style={{ margin:0, fontSize:8, fontWeight:800, letterSpacing:'.07em', color:'#111', textTransform:'uppercase' }}>2025</p>
+              </div>
+            )}
+          </Tap>
+        ))}
+      </div>
+
+      {lightbox !== null && (
+        <div onClick={() => setLightbox(null)} style={{
+          position:'fixed', inset:0, zIndex:600,
+          background:'rgba(0,0,0,0.93)',
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+          animation:'fadeUp 0.2s ease both',
+        }}>
+          <img src={photos[lightbox].src} alt={photos[lightbox].caption} style={{
+            maxWidth:'100%', maxHeight:'72vh', objectFit:'contain',
+            filter:isLastYear ? 'sepia(0.3) saturate(0.85)' : 'none',
+            borderRadius:6,
+          }} />
+          <p style={{ color:'rgba(255,255,255,0.72)', margin:'14px 0 16px', fontSize:13, padding:'0 32px', textAlign:'center' }}>{photos[lightbox].caption}</p>
+          <div style={{ display:'flex', gap:7 }}>
+            {photos.map((_, i) => (
+              <div key={i}
+                onClick={e => { e.stopPropagation(); setLightbox(i) }}
+                style={{ width:6, height:6, borderRadius:'50%', background:i===lightbox ? '#fff' : 'rgba(255,255,255,0.32)', cursor:'pointer', transition:'background 0.2s' }} />
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ─── PHOTO GALLERY — PROTOTYPE B: FEATURED SLIDER ─────────────────────────────
+function FeaturedSlider({ photos, isLastYear }) {
+  const C = useC()
+  const [idx, setIdx] = useState(0)
+  const [lightbox, setLightbox] = useState(false)
+  const dragStart = useRef(null)
+
+  const goTo = i => setIdx((i + photos.length) % photos.length)
+
+  const onPointerDown = e => { dragStart.current = e.clientX }
+  const onPointerUp   = e => {
+    if (dragStart.current == null) return
+    const dx = dragStart.current - e.clientX
+    if (Math.abs(dx) > 36) goTo(idx + (dx > 0 ? 1 : -1))
+    dragStart.current = null
+  }
+
+  const photo = photos[idx]
+
+  return (
+    <>
+      <div style={{ margin:'0 16px', borderRadius:18, overflow:'hidden', boxShadow:'0 2px 16px rgba(0,0,0,0.10)' }}
+        onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+
+        <Tap onClick={() => setLightbox(true)}>
+          <div style={{ position:'relative', paddingTop:'62%', background:C.surfaceHi }}>
+            <img key={photo.id} src={photo.src} alt={photo.caption} style={{
+              position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover',
+              filter:isLastYear ? 'sepia(0.35) saturate(0.82)' : 'none',
+              animation:'fadeUp 0.22s ease both',
+            }} />
+            <div style={{
+              position:'absolute', bottom:0, left:0, right:0,
+              background:'linear-gradient(to top, rgba(0,0,0,0.76) 0%, transparent 100%)',
+              padding:'36px 14px 14px',
+            }}>
+              <p style={{ margin:0, fontSize:13, fontWeight:600, color:'#fff', lineHeight:1.35 }}>{photo.caption}</p>
+            </div>
+            <div style={{
+              position:'absolute', top:10, right:10,
+              background:'rgba(0,0,0,0.52)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
+              borderRadius:8, padding:'3px 9px',
+            }}>
+              <p style={{ margin:0, fontSize:11, fontWeight:700, color:'#fff' }}>{idx+1} / {photos.length}</p>
+            </div>
+            {isLastYear && (
+              <div style={{ position:'absolute', top:10, left:10, background:'rgba(240,180,41,0.92)', backdropFilter:'blur(4px)', borderRadius:8, padding:'3px 9px' }}>
+                <p style={{ margin:0, fontSize:10, fontWeight:800, color:'#111', letterSpacing:'.06em', textTransform:'uppercase' }}>VBS 2025</p>
+              </div>
+            )}
+          </div>
+        </Tap>
+
+        <div style={{
+          background:C.surface, borderTop:`1px solid ${C.border}`,
+          padding:'10px 0 13px',
+          display:'flex', justifyContent:'center', alignItems:'center', gap:6,
+        }}>
+          {photos.map((_, i) => (
+            <div key={i} onClick={() => goTo(i)} style={{
+              width:i===idx ? 20 : 6, height:6, borderRadius:99,
+              background:i===idx ? C.accent : C.track,
+              cursor:'pointer', transition:'all 0.32s cubic-bezier(0.34,1.56,0.64,1)',
+            }} />
+          ))}
+        </div>
+      </div>
+
+      {lightbox && (
+        <div onClick={() => setLightbox(false)} style={{
+          position:'fixed', inset:0, zIndex:600,
+          background:'rgba(0,0,0,0.94)',
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+          animation:'fadeUp 0.2s ease both',
+        }}>
+          <img src={photo.src} alt={photo.caption} style={{
+            maxWidth:'100%', maxHeight:'78vh', objectFit:'contain',
+            filter:isLastYear ? 'sepia(0.3) saturate(0.85)' : 'none',
+          }} />
+          <p style={{ color:'rgba(255,255,255,0.72)', marginTop:14, fontSize:13, padding:'0 32px', textAlign:'center' }}>{photo.caption}</p>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ─── PHOTO GALLERY — PROTOTYPE C: STORY VIEWER ────────────────────────────────
+function StoryViewer({ photos, isLastYear }) {
+  const C = useC()
+  const [open, setOpen]       = useState(false)
+  const [storyIdx, setStoryIdx] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const timerRef  = useRef(null)
+  const storyRef  = useRef(storyIdx)
+  storyRef.current = storyIdx
+
+  const closeStory = () => { clearInterval(timerRef.current); setOpen(false) }
+
+  const openStory = i => { setStoryIdx(i); setProgress(0); setOpen(true) }
+
+  const goNext = () => {
+    clearInterval(timerRef.current)
+    const next = storyRef.current + 1
+    if (next < photos.length) { setStoryIdx(next); setProgress(0) }
+    else closeStory()
+  }
+
+  const goPrev = () => {
+    clearInterval(timerRef.current)
+    const prev = storyRef.current - 1
+    if (prev >= 0) { setStoryIdx(prev); setProgress(0) }
+  }
+
+  useEffect(() => {
+    if (!open) return
+    const DURATION = 4000, TICK = 50
+    let elapsed = 0
+    clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
+      elapsed += TICK
+      setProgress(elapsed / DURATION)
+      if (elapsed >= DURATION) {
+        clearInterval(timerRef.current)
+        const next = storyRef.current + 1
+        if (next < photos.length) { setStoryIdx(next); setProgress(0) }
+        else closeStory()
+      }
+    }, TICK)
+    return () => clearInterval(timerRef.current)
+  }, [open, storyIdx])
+
+  const BUBBLE = 72
+
+  return (
+    <>
+      <div style={{
+        display:'flex', overflowX:'auto', overflowY:'hidden',
+        scrollbarWidth:'none', WebkitOverflowScrolling:'touch',
+        paddingLeft:16, paddingRight:16, paddingBottom:4, gap:14,
+      }}>
+        {photos.map((photo, i) => (
+          <Tap key={photo.id} onClick={() => openStory(i)} style={{
+            flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:5,
+          }}>
+            <div style={{
+              width:BUBBLE+4, height:BUBBLE+4, borderRadius:'50%', padding:2.5,
+              background:`conic-gradient(${C.accent} 0deg, ${C.accent} 300deg, ${hexToRgba(C.accent,0.18)} 300deg)`,
+              boxSizing:'border-box',
+            }}>
+              <div style={{ width:'100%', height:'100%', borderRadius:'50%', overflow:'hidden', border:'2.5px solid #fff' }}>
+                <img src={photo.src} alt={photo.caption} style={{
+                  width:'100%', height:'100%', objectFit:'cover',
+                  filter:isLastYear ? 'sepia(0.38) saturate(0.82)' : 'none',
+                }} />
+              </div>
+            </div>
+            <p style={{ margin:0, fontSize:10, fontWeight:600, color:C.muted, textAlign:'center', maxWidth:BUBBLE+4, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+              {photo.caption.split(' · ')[0]}
+            </p>
+          </Tap>
+        ))}
+      </div>
+
+      {open && (
+        <div style={{ position:'fixed', inset:0, zIndex:600, background:'#000', animation:'fadeUp 0.18s ease both' }}>
+
+          {/* Progress bars */}
+          <div style={{
+            position:'absolute', top:'env(safe-area-inset-top,0px)', left:0, right:0,
+            padding:'14px 10px 0', display:'flex', gap:4, zIndex:10,
+          }}>
+            {photos.map((_, i) => (
+              <div key={i} style={{ flex:1, height:2.5, borderRadius:99, background:'rgba(255,255,255,0.28)', overflow:'hidden' }}>
+                <div style={{
+                  height:'100%', borderRadius:99, background:'#fff',
+                  width: i < storyIdx ? '100%' : i === storyIdx ? `${progress*100}%` : '0%',
+                }} />
+              </div>
+            ))}
+          </div>
+
+          <img key={storyIdx} src={photos[storyIdx].src} alt={photos[storyIdx].caption} style={{
+            width:'100%', height:'100%', objectFit:'cover',
+            filter:isLastYear ? 'sepia(0.3) saturate(0.85) brightness(0.9)' : 'none',
+            animation:'fadeUp 0.18s ease both',
+          }} />
+
+          <div style={{
+            position:'absolute', bottom:0, left:0, right:0,
+            background:'linear-gradient(to top, rgba(0,0,0,0.88), transparent)',
+            padding:`48px 20px calc(env(safe-area-inset-bottom,0px) + 36px)`,
+          }}>
+            {isLastYear && <p style={{ margin:'0 0 4px', fontSize:11, fontWeight:800, letterSpacing:'.08em', textTransform:'uppercase', color:'rgba(240,180,41,0.95)' }}>VBS 2025</p>}
+            <p style={{ margin:0, fontSize:17, fontWeight:700, color:'#fff', lineHeight:1.4 }}>{photos[storyIdx].caption}</p>
+          </div>
+
+          {/* Left / right tap zones */}
+          <div style={{ position:'absolute', inset:0, display:'flex', zIndex:5 }}>
+            <div style={{ flex:1 }} onClick={goPrev} />
+            <div style={{ flex:1 }} onClick={goNext} />
+          </div>
+
+          {/* Close */}
+          <Tap onClick={closeStory} style={{
+            position:'absolute', top:'calc(env(safe-area-inset-top,0px) + 32px)', right:14,
+            width:32, height:32, borderRadius:'50%', zIndex:11,
+            background:'rgba(255,255,255,0.18)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+          }}>
+            <span style={{ color:'#fff', fontSize:16, lineHeight:1 }}>✕</span>
+          </Tap>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ─── PHOTO GALLERY — PROTOTYPE D: PEEK CAROUSEL ───────────────────────────────
+function PeekCarousel({ photos, isLastYear }) {
+  const C = useC()
+  const [idx, setIdx] = useState(0)
+  const [lightbox, setLightbox] = useState(null)
+  const wrapRef = useRef(null)
+  const [cardW, setCardW] = useState(0)
+  const dragStart = useRef(null)
+  const PEEK = 32
+  const GAP  = 12
+
+  useEffect(() => {
+    const el = wrapRef.current
+    if (el) setCardW(el.clientWidth - PEEK * 2)
+  }, [])
+
+  const goTo = i => setIdx(Math.max(0, Math.min(photos.length - 1, i)))
+  const trackX = -(idx * (cardW + GAP))
+
+  const onPD = e => { dragStart.current = e.clientX }
+  const onPU = e => {
+    if (dragStart.current == null) return
+    const dx = dragStart.current - e.clientX
+    dragStart.current = null
+    if (Math.abs(dx) > 36) goTo(idx + (dx > 0 ? 1 : -1))
+  }
+
+  return (
+    <>
+      <div ref={wrapRef}
+        style={{ overflow:'hidden', paddingLeft:PEEK, margin:'0 16px' }}
+        onPointerDown={onPD} onPointerUp={onPU}>
+        <div style={{
+          display:'flex', gap:GAP,
+          transform:`translateX(${trackX}px)`,
+          transition:'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)',
+        }}>
+          {photos.map((photo, i) => {
+            const isActive = i === idx
+            return (
+              <Tap key={photo.id}
+                onClick={() => isActive ? setLightbox(i) : goTo(i)}
+                style={{
+                  flexShrink:0,
+                  width:cardW || `calc(100% - ${GAP}px)`,
+                  borderRadius:20, overflow:'hidden', position:'relative',
+                  boxShadow:isActive ? '0 10px 34px rgba(0,0,0,0.22)' : '0 2px 10px rgba(0,0,0,0.08)',
+                  transition:'box-shadow 0.36s ease',
+                }}>
+                <div style={{ paddingTop:'76%', position:'relative', background:C.surfaceHi }}>
+                  <img src={photo.src} alt={photo.caption} style={{
+                    position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover',
+                    filter:isLastYear
+                      ? `sepia(0.35) saturate(0.82)${isActive ? '' : ' brightness(0.65)'}`
+                      : isActive ? 'none' : 'brightness(0.65)',
+                    transition:'filter 0.36s ease',
+                  }} />
+                  <div style={{
+                    position:'absolute', bottom:0, left:0, right:0,
+                    background:'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                    padding:'44px 16px 16px',
+                    opacity:isActive ? 1 : 0,
+                    transition:'opacity 0.3s ease',
+                  }}>
+                    {isLastYear && <p style={{ margin:'0 0 3px', fontSize:10, fontWeight:800, letterSpacing:'.07em', textTransform:'uppercase', color:'rgba(240,180,41,0.9)' }}>VBS 2025</p>}
+                    <p style={{ margin:0, fontSize:14, fontWeight:700, color:'#fff', lineHeight:1.35 }}>{photo.caption}</p>
+                  </div>
+                </div>
+              </Tap>
+            )
+          })}
+        </div>
+      </div>
+
+      <div style={{ display:'flex', justifyContent:'center', gap:6, marginTop:12 }}>
+        {photos.map((_, i) => (
+          <div key={i} onClick={() => goTo(i)} style={{
+            width:i===idx ? 20 : 6, height:6, borderRadius:99,
+            background:i===idx ? C.accent : C.track,
+            cursor:'pointer',
+            transition:'all 0.32s cubic-bezier(0.34,1.56,0.64,1)',
+          }} />
+        ))}
+      </div>
+
+      {lightbox !== null && (
+        <div onClick={() => setLightbox(null)} style={{
+          position:'fixed', inset:0, zIndex:600,
+          background:'rgba(0,0,0,0.93)',
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+          animation:'fadeUp 0.2s ease both',
+        }}>
+          <img src={photos[lightbox].src} alt={photos[lightbox].caption} style={{
+            maxWidth:'100%', maxHeight:'76vh', objectFit:'contain',
+            filter:isLastYear ? 'sepia(0.3) saturate(0.85)' : 'none',
+          }} />
+          <p style={{ color:'rgba(255,255,255,0.72)', margin:'14px 0 0', fontSize:13, padding:'0 32px', textAlign:'center' }}>{photos[lightbox].caption}</p>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ─── PHOTO GALLERY — PROTOTYPE E: POLAROID STACK ──────────────────────────────
+function PolaroidWall({ photos, isLastYear }) {
+  const C = useC()
+  const [topIdx, setTopIdx] = useState(0)
+  const [exiting, setExiting] = useState(false)
+
+  const advance = () => {
+    if (exiting) return
+    setExiting(true)
+    setTimeout(() => {
+      setTopIdx(i => (i + 1) % photos.length)
+      setExiting(false)
+    }, 270)
+  }
+
+  const CARD_W  = 270
+  const PHOTO_H = 248
+  const LABEL_H = 56
+
+  const p0 = photos[topIdx]
+  const p1 = photos[(topIdx + 1) % photos.length]
+  const p2 = photos[(topIdx + 2) % photos.length]
+
+  const base = {
+    position:'absolute', left:'50%',
+    width:CARD_W, background:'#fff',
+    padding:'9px 9px 0', borderRadius:4,
+    boxSizing:'border-box',
+  }
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', margin:'0 16px' }}>
+      <Tap onClick={advance} style={{ position:'relative', width:CARD_W, height:PHOTO_H + LABEL_H + 32 }}>
+
+        {/* Back card */}
+        <div style={{ ...base, top:20, transform:'translateX(-50%) rotate(5.5deg)', zIndex:1,
+          boxShadow:'0 3px 14px rgba(0,0,0,0.14)', opacity:0.72 }}>
+          <img src={p2.src} style={{ width:'100%', height:PHOTO_H, objectFit:'cover', display:'block', borderRadius:2,
+            filter:isLastYear ? 'sepia(0.65) saturate(0.7)' : 'grayscale(0.55) brightness(0.85)' }} />
+          <div style={{ height:LABEL_H }} />
+        </div>
+
+        {/* Middle card */}
+        <div style={{ ...base, top:8, transform:'translateX(-50%) rotate(-2.8deg)', zIndex:2,
+          boxShadow:'0 4px 18px rgba(0,0,0,0.16)', opacity:0.86 }}>
+          <img src={p1.src} style={{ width:'100%', height:PHOTO_H, objectFit:'cover', display:'block', borderRadius:2,
+            filter:isLastYear ? 'sepia(0.45) saturate(0.78)' : 'grayscale(0.25) brightness(0.9)' }} />
+          <div style={{ height:LABEL_H }} />
+        </div>
+
+        {/* Top card — flicks away on tap */}
+        <div style={{
+          ...base, top:0, zIndex:3,
+          boxShadow:'0 10px 36px rgba(0,0,0,0.22)',
+          transform:exiting
+            ? 'translateX(calc(-50% + 70px)) rotate(14deg) translateY(-18px)'
+            : 'translateX(-50%) rotate(-1.8deg)',
+          opacity:exiting ? 0 : 1,
+          transition:exiting ? 'transform 0.24s ease-in, opacity 0.22s ease-in' : 'none',
+        }}>
+          <img src={p0.src} style={{
+            width:'100%', height:PHOTO_H, objectFit:'cover', display:'block', borderRadius:2,
+            filter:isLastYear ? 'sepia(0.38) saturate(0.82)' : 'none',
+          }} />
+          <div style={{ height:LABEL_H, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'4px 8px 8px' }}>
+            <p style={{ margin:0, fontSize:11, fontWeight:600, color:'#444', textAlign:'center', lineHeight:1.4 }}>{p0.caption}</p>
+            {isLastYear && <p style={{ margin:'2px 0 0', fontSize:9, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:'rgba(160,100,0,0.65)' }}>VBS 2025</p>}
+          </div>
+        </div>
+      </Tap>
+
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:10 }}>
+        <p style={{ margin:0, fontSize:11, color:C.muted }}>Tap to flip through</p>
+        <span style={{ fontSize:10, color:C.mutedLt }}>·</span>
+        <p style={{ margin:0, fontSize:11, fontWeight:700, color:C.accent }}>{topIdx + 1} / {photos.length}</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── PHOTO GALLERY ─────────────────────────────────────────────────────────────
+function PhotoGallery({ dayIdx }) {
+  const C = useC()
+
+  const photos     = dayIdx === 0 ? PHOTO_DATA.lastYear : (PHOTO_DATA[dayIdx] || PHOTO_DATA[1])
+  const isLastYear = dayIdx === 0
+  const prevDay    = dayIdx > 0 ? DAYS[dayIdx - 1] : null
+  const sectionLabel = isLastYear ? 'From Last Year' : `Yesterday · ${prevDay.label.split(' · ')[0]}`
+
+  return (
+    <div>
+      <p style={{ margin:'20px 0 10px', fontSize:11, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:C.muted, paddingLeft:16 }}>{sectionLabel}</p>
+      <PolaroidWall photos={photos} isLastYear={isLastYear} />
+    </div>
+  )
+}
+
 // ─── TODAY PAGE ───────────────────────────────────────────────────────────────
 function TodayPage({ myGroup, live, now, onChangeGroup, onHelp, preschoolSub, onToggleSub, onOpenGuide, homeScreenDone }) {
   const C = useC()
@@ -1247,6 +1733,7 @@ function TodayPage({ myGroup, live, now, onChangeGroup, onHelp, preschoolSub, on
         <CardDeck day={day} />
         <p style={{ margin:'20px 0 0',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>This Week</p>
         <BuddyTrail dayIdx={dayIdx} />
+        <PhotoGallery dayIdx={dayIdx} />
       </div>
     </div>
   )

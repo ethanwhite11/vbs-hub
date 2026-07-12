@@ -1,0 +1,54 @@
+// ─── PHOTO DATA ───────────────────────────────────────────────────────────────
+// Drop photos into public/photos/<folder>/ then update the src and caption below.
+// src path = /photos/<folder>/<filename>   (must match the actual filename exactly)
+// caption  = short label shown on the polaroid
+
+export const PHOTO_DATA = {
+
+  // ── VBS 2025 (shown on Day 1 before any current-week photos exist) ──────────
+  // Drop files into: public/photos/lastYear/
+  lastYear: [
+    { id:'ly1', src:'/photos/lastYear/photo1.jpg', caption:'Opening Day · VBS 2025'     },
+    { id:'ly2', src:'/photos/lastYear/photo2.jpg', caption:'Crew Time · VBS 2025'       },
+    { id:'ly3', src:'/photos/lastYear/photo3.jpg', caption:'Memory Verse · VBS 2025'    },
+    { id:'ly4', src:'/photos/lastYear/photo4.jpg', caption:'Wild Games · VBS 2025'      },
+    { id:'ly5', src:'/photos/lastYear/photo5.jpg', caption:'Canopy Closing · VBS 2025'  },
+  ],
+
+  // ── Monday (shown Tuesday morning) ─────────────────────────────────────────
+  // Drop files into: public/photos/day1/
+  1: [
+    { id:'d1a', src:'/photos/day1/photo1.jpg', caption:'God is our creator'  },
+    { id:'d1b', src:'/photos/day1/photo2.jpg', caption:'Crew time'           },
+    { id:'d1c', src:'/photos/day1/photo3.jpg', caption:'Wild games'          },
+    { id:'d1d', src:'/photos/day1/photo4.jpg', caption:'Memory verse'        },
+  ],
+
+  // ── Tuesday (shown Wednesday morning) ──────────────────────────────────────
+  // Drop files into: public/photos/day2/
+  2: [
+    { id:'d2a', src:'/photos/day2/photo1.jpg', caption:'God knows everything' },
+    { id:'d2b', src:'/photos/day2/photo2.jpg', caption:'Crew time'            },
+    { id:'d2c', src:'/photos/day2/photo3.jpg', caption:'Wild games'           },
+    { id:'d2d', src:'/photos/day2/photo4.jpg', caption:'Memory verse'         },
+  ],
+
+  // ── Wednesday (shown Thursday morning) ─────────────────────────────────────
+  // Drop files into: public/photos/day3/
+  3: [
+    { id:'d3a', src:'/photos/day3/photo1.jpg', caption:'God is our safe place' },
+    { id:'d3b', src:'/photos/day3/photo2.jpg', caption:'Crew time'             },
+    { id:'d3c', src:'/photos/day3/photo3.jpg', caption:'Wild games'            },
+    { id:'d3d', src:'/photos/day3/photo4.jpg', caption:'Memory verse'          },
+  ],
+
+  // ── Thursday (shown Friday morning) ────────────────────────────────────────
+  // Drop files into: public/photos/day4/
+  4: [
+    { id:'d4a', src:'/photos/day4/photo1.jpg', caption:'God is love'  },
+    { id:'d4b', src:'/photos/day4/photo2.jpg', caption:'Crew time'    },
+    { id:'d4c', src:'/photos/day4/photo3.jpg', caption:'Wild games'   },
+    { id:'d4d', src:'/photos/day4/photo4.jpg', caption:'Memory verse' },
+  ],
+
+}
