@@ -1627,11 +1627,13 @@ function PolaroidWall({ photos, isLastYear }) {
   const [topIdx, setTopIdx] = useState(0)
   const [exiting, setExiting] = useState(false)
 
+  const isLast = topIdx >= photos.length - 1
+
   const advance = () => {
-    if (exiting) return
+    if (exiting || isLast) return
     setExiting(true)
     setTimeout(() => {
-      setTopIdx(i => (i + 1) % photos.length)
+      setTopIdx(i => i + 1)
       setExiting(false)
     }, 270)
   }
@@ -1641,8 +1643,8 @@ function PolaroidWall({ photos, isLastYear }) {
   const LABEL_H = 56
 
   const p0 = photos[topIdx]
-  const p1 = photos[(topIdx + 1) % photos.length]
-  const p2 = photos[(topIdx + 2) % photos.length]
+  const p1 = topIdx + 1 < photos.length ? photos[topIdx + 1] : null
+  const p2 = topIdx + 2 < photos.length ? photos[topIdx + 2] : null
 
   const base = {
     position:'absolute', left:'50%',
@@ -1653,23 +1655,27 @@ function PolaroidWall({ photos, isLastYear }) {
 
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', margin:'0 16px' }}>
-      <Tap onClick={advance} style={{ position:'relative', width:CARD_W, height:PHOTO_H + LABEL_H + 32 }}>
+      <Tap onClick={isLast ? () => setTopIdx(0) : advance} style={{ position:'relative', width:CARD_W, height:PHOTO_H + LABEL_H + 32 }}>
 
         {/* Back card */}
-        <div style={{ ...base, top:20, transform:'translateX(-50%) rotate(5.5deg)', zIndex:1,
-          boxShadow:'0 3px 14px rgba(0,0,0,0.14)', opacity:0.72 }}>
-          <img src={p2.src} style={{ width:'100%', height:PHOTO_H, objectFit:'cover', display:'block', borderRadius:2,
-            filter:isLastYear ? 'sepia(0.65) saturate(0.7)' : 'grayscale(0.55) brightness(0.85)' }} />
-          <div style={{ height:LABEL_H }} />
-        </div>
+        {p2 && (
+          <div style={{ ...base, top:20, transform:'translateX(-50%) rotate(5.5deg)', zIndex:1,
+            boxShadow:'0 3px 14px rgba(0,0,0,0.14)', opacity:0.72 }}>
+            <img src={p2.src} style={{ width:'100%', height:PHOTO_H, objectFit:'cover', display:'block', borderRadius:2,
+              filter:isLastYear ? 'saturate(1.2) brightness(0.92)' : 'grayscale(0.55) brightness(0.85)' }} />
+            <div style={{ height:LABEL_H }} />
+          </div>
+        )}
 
         {/* Middle card */}
-        <div style={{ ...base, top:8, transform:'translateX(-50%) rotate(-2.8deg)', zIndex:2,
-          boxShadow:'0 4px 18px rgba(0,0,0,0.16)', opacity:0.86 }}>
-          <img src={p1.src} style={{ width:'100%', height:PHOTO_H, objectFit:'cover', display:'block', borderRadius:2,
-            filter:isLastYear ? 'sepia(0.45) saturate(0.78)' : 'grayscale(0.25) brightness(0.9)' }} />
-          <div style={{ height:LABEL_H }} />
-        </div>
+        {p1 && (
+          <div style={{ ...base, top:8, transform:'translateX(-50%) rotate(-2.8deg)', zIndex:2,
+            boxShadow:'0 4px 18px rgba(0,0,0,0.16)', opacity:0.86 }}>
+            <img src={p1.src} style={{ width:'100%', height:PHOTO_H, objectFit:'cover', display:'block', borderRadius:2,
+              filter:isLastYear ? 'saturate(1.3) brightness(0.97)' : 'grayscale(0.25) brightness(0.9)' }} />
+            <div style={{ height:LABEL_H }} />
+          </div>
+        )}
 
         {/* Top card — flicks away on tap */}
         <div style={{
@@ -1683,7 +1689,7 @@ function PolaroidWall({ photos, isLastYear }) {
         }}>
           <img src={p0.src} style={{
             width:'100%', height:PHOTO_H, objectFit:'cover', display:'block', borderRadius:2,
-            filter:isLastYear ? 'sepia(0.38) saturate(0.82)' : 'none',
+            filter:isLastYear ? 'saturate(1.35)' : 'none',
           }} />
           <div style={{ height:LABEL_H, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'4px 8px 8px' }}>
             <p style={{ margin:0, fontSize:11, fontWeight:600, color:'#444', textAlign:'center', lineHeight:1.4 }}>{p0.caption}</p>
@@ -1693,7 +1699,7 @@ function PolaroidWall({ photos, isLastYear }) {
       </Tap>
 
       <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:10 }}>
-        <p style={{ margin:0, fontSize:11, color:C.muted }}>Tap to flip through</p>
+        <p style={{ margin:0, fontSize:11, color:C.muted }}>{isLast ? 'Tap to start over' : 'Tap to flip through'}</p>
         <span style={{ fontSize:10, color:C.mutedLt }}>·</span>
         <p style={{ margin:0, fontSize:11, fontWeight:700, color:C.accent }}>{topIdx + 1} / {photos.length}</p>
       </div>
@@ -1712,7 +1718,7 @@ function PhotoGallery({ dayIdx }) {
 
   return (
     <div>
-      <p style={{ margin:'20px 0 10px', fontSize:11, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:C.muted, paddingLeft:16 }}>{sectionLabel}</p>
+      <p style={{ margin:'20px 0 20px', fontSize:11, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:C.muted, paddingLeft:16 }}>{sectionLabel}</p>
       <PolaroidWall photos={photos} isLastYear={isLastYear} />
     </div>
   )
