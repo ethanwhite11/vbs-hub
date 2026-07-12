@@ -8,11 +8,13 @@ export const PHOTO_DATA = {
   // ── VBS 2025 (shown on Day 1 before any current-week photos exist) ──────────
   // Drop files into: public/photos/lastYear/
   lastYear: [
-    { id:'ly1', src:'/photos/lastYear/photo1.jpg', caption:'Opening Day · VBS 2025'     },
-    { id:'ly2', src:'/photos/lastYear/photo2.jpg', caption:'Crew Time · VBS 2025'       },
-    { id:'ly3', src:'/photos/lastYear/photo3.jpg', caption:'Memory Verse · VBS 2025'    },
-    { id:'ly4', src:'/photos/lastYear/photo4.jpg', caption:'Wild Games · VBS 2025'      },
-    { id:'ly5', src:'/photos/lastYear/photo5.jpg', caption:'Canopy Closing · VBS 2025'  },
+    { id:'ly1', src:'/photos/lastYear/411_0280_DayCamp2025.jpg',       caption:'True North'  },
+    { id:'ly2', src:'/photos/lastYear/411_0568_DayCamp2025.jpg',       caption:'True North'  },
+    { id:'ly3', src:'/photos/lastYear/411_9732_DayCamp2025 (1).jpg',   caption:'True North'  },
+    { id:'ly4', src:'/photos/lastYear/411_9932_DayCamp2025.jpg',       caption:'True North'  },
+    { id:'ly5', src:'/photos/lastYear/DSC_2282_DayCamp2025.jpg',       caption:'True North'  },
+    { id:'ly6', src:'/photos/lastYear/DSC_3063_DayCamp2025 (1).jpg',   caption:'True North'  },
+    { id:'ly7', src:'/photos/lastYear/DSC_3260_DayCamp2025.jpg',       caption:'True North'  },
   ],
 
   // ── Monday (shown Tuesday morning) ─────────────────────────────────────────
