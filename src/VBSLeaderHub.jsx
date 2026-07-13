@@ -2061,7 +2061,7 @@ function CoffeePage({ myGroup }) {
   }
 
   const send = () => {
-    window.location.href = `sms:${COFFEE_NUM}&body=${encodeURIComponent(buildMsg())}`
+    window.location.href = `sms:${COFFEE_NUM}?body=${encodeURIComponent(buildMsg())}`
     setSent(true)
     setTimeout(() => setSent(false), 5000)
   }
