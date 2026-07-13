@@ -234,7 +234,11 @@ function getLive(now) {
     const s = toMin(SLOTS[i].start), e = toMin(SLOTS[i].end)
     if (cur >= s && cur < e) return { status:'live', dayIdx, slot:SLOTS[i], slotIdx:i, minIn:cur-s, minLeft:e-cur, duration:e-s, progress:(cur-s)/(e-s), next:SLOTS[i+1]||null }
   }
-  return { status:'done', dayIdx }
+  // Within the VBS window but in a gap between two stations (a transition).
+  // We've already returned 'before'/'after' for outside the window, so a
+  // matching next slot always exists here.
+  const nextIdx = SLOTS.findIndex(s => cur < toMin(s.start))
+  return { status:'transition', dayIdx, slotIdx:-1, next:SLOTS[nextIdx], nextIdx, minUntil: toMin(SLOTS[nextIdx].start) - cur }
 }
 
 function getActivity(g, slotIdx, rotKey) {
@@ -460,6 +464,32 @@ function NowHero({ myGroup, live, onChangeGroup, onHelp, preschoolSub }) {
       <p style={{ margin:0,fontSize:28,fontWeight:700,color:C.muted }}>Wrapped for today</p>
     </div>
   )
+
+  if (live.status === 'transition') {
+    const tNext = live.next
+    const tAct  = myGroup ? getActivity(myGroup, live.nextIdx, rotKey) : null
+    const tName = tNext.allGroups ? tNext.label : (tAct?.s || 'Station Rotation')
+    const tLoc  = tNext.allGroups ? tNext.location : (tAct?.l || null)
+    return (
+      <div style={greenBase}>
+        <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:16 }}>
+          <div style={{ display:'flex',alignItems:'center',gap:6 }}>
+            <div style={{ width:6,height:6,borderRadius:'50%',background:'rgba(255,255,255,0.85)',animation:'livePulse 2s ease infinite' }} />
+            <span style={{ fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.8)',letterSpacing:'.08em',textTransform:'uppercase' }}>
+              Transition · {DAYS[live.dayIdx].label}
+            </span>
+          </div>
+          <WhiteBadge />
+        </div>
+        <p style={{ margin:'0 0 4px',fontSize:15,color:'rgba(255,255,255,0.75)' }}>Heading to</p>
+        <p style={{ margin:'0 0 4px',fontSize:32,fontWeight:800,color:'#fff',lineHeight:1.1 }}>{tName}</p>
+        {tLoc && <p style={{ margin:'0 0 16px',fontSize:13,color:'rgba(255,255,255,0.82)' }}>📍 {tLoc}</p>}
+        <span style={{ fontSize:13,color:'rgba(255,255,255,0.9)',fontWeight:700 }}>
+          Starts in {live.minUntil} min · {fmtTime(tNext.start)}
+        </span>
+      </div>
+    )
+  }
 
   // Live state
   const { slot, slotIdx, minLeft, progress, next } = live
@@ -1751,16 +1781,17 @@ function SchedulePage({ myGroup, live, now, onChangeGroup, preschoolSub, onToggl
   const g = myGroup ? GROUPS[myGroup] : null
   const rotKey = myGroup === 'orange' ? (preschoolSub === 2 ? 'orange2' : 'orange') : myGroup
   const cur = now.getHours()*60 + now.getMinutes()
-  const inVbs = ['live','before','after'].includes(live.status)
+  const inVbs = ['live','before','after','transition'].includes(live.status)
+  const isTransition = live.status === 'transition'
 
   const curIdx    = live.status === 'live' ? live.slotIdx : -1
   const pastCount = inVbs ? SLOTS.filter(s => cur > toMin(s.end)).length : 0
   const filledPct = Math.min(100, ((pastCount + (curIdx >= 0 ? live.progress : 0)) / SLOTS.length) * 100)
-  const nextIdx   = curIdx >= 0 && curIdx < SLOTS.length - 1 ? curIdx + 1 : -1
+  const nextIdx   = curIdx >= 0 ? (curIdx < SLOTS.length - 1 ? curIdx + 1 : -1) : (isTransition ? live.nextIdx : -1)
   const curSlot   = curIdx >= 0 ? SLOTS[curIdx] : null
   const nextSlot  = nextIdx >= 0 ? SLOTS[nextIdx] : null
-  const laterList = curIdx >= 0 ? SLOTS.slice(nextIdx >= 0 ? nextIdx + 1 : curIdx + 1) : []
-  const laterBaseIdx = nextIdx >= 0 ? nextIdx + 1 : curIdx + 1
+  const laterList = nextIdx >= 0 ? SLOTS.slice(nextIdx + 1) : []
+  const laterBaseIdx = nextIdx + 1
 
   const dName = (slot, i) =>
     slot.allGroups ? slot.label
@@ -1780,7 +1811,7 @@ function SchedulePage({ myGroup, live, now, onChangeGroup, preschoolSub, onToggl
 
   const minsUntil = slot => Math.max(0, toMin(slot.start) - cur)
 
-  const showStrip = live.status === 'live' || live.status === 'after'
+  const showStrip = live.status === 'live' || live.status === 'after' || isTransition
   const GREEN = '#16a34a'
   const GREEN_BG = 'rgba(22,163,74,0.10)'
 
@@ -1894,7 +1925,9 @@ function SchedulePage({ myGroup, live, now, onChangeGroup, preschoolSub, onToggl
             <p style={{ margin:'10px 0 0', fontSize:11, color:C.muted, textAlign:'center' }}>
               {live.status === 'after'
                 ? 'All done — great work today! 🎉'
-                : `Stop ${curIdx + 1} of ${SLOTS.length} · ${SLOTS.length - curIdx - 1} stop${SLOTS.length - curIdx - 1 !== 1 ? 's' : ''} remaining`
+                : isTransition
+                  ? `Transitioning · heading to stop ${nextIdx + 1} of ${SLOTS.length}`
+                  : `Stop ${curIdx + 1} of ${SLOTS.length} · ${SLOTS.length - curIdx - 1} stop${SLOTS.length - curIdx - 1 !== 1 ? 's' : ''} remaining`
               }
             </p>
           </div>
