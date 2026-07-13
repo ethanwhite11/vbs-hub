@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, createContext, useContext } from "react"
+import { useState, useEffect, useRef, useMemo, createContext, useContext } from "react"
 import { Calendar, Coffee, Home, ChevronDown, ChevronRight, ChevronLeft, RefreshCw } from "lucide-react"
 import { PHOTO_DATA } from "./photoData.js"
 
@@ -204,6 +204,32 @@ const TIPS = [
   {icon:"🌿",tip:"Help kids find their own God Sighting each day. Ask 'Where did you see God today?' at the start of crew time."},
   {icon:"💪",tip:"If a kid has a rough moment, pull them aside gently and check in quietly. Don't make it a scene."},
 ]
+
+// ─── DAILY SEED UTILITIES ─────────────────────────────────────────────────────
+function getDaySeed() {
+  const d = new Date()
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate()
+}
+
+function seededRng(seed) {
+  let s = seed >>> 0
+  return () => {
+    s = Math.imul(s ^ (s >>> 16), 0x45d9f3b)
+    s = Math.imul(s ^ (s >>> 16), 0x45d9f3b)
+    s = s ^ (s >>> 16)
+    return (s >>> 0) / 0x100000000
+  }
+}
+
+function dailyShuffled(arr) {
+  const rng = seededRng(getDaySeed())
+  const result = [...arr]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
 
 // ─── UTILITIES ────────────────────────────────────────────────────────────────
 const toMin = ([h,m]) => h*60+m
@@ -540,10 +566,11 @@ function CardDeck({ day }) {
   const [activeDot, setActiveDot]     = useState(0)
   const [bibleRevealed, setBible]     = useState(false)
   const [verseFlipped, setVerse]      = useState(false)
-  const [jokeIdx, setJokeIdx]         = useState(0)
+  const [jokeIdx, setJokeIdx]         = useState(() => getDaySeed() % JOKES.length)
   const [jokeRevealed, setJokeRev]    = useState(false)
   const [iceIdx, setIceIdx]           = useState(0)
   const [iceOut, setIceOut]           = useState(false)
+  const dailyIce = useMemo(() => dailyShuffled(ICEBREAKERS), [])
   const [tipIdx, setTipIdx]           = useState(0)
 
   const W = 250, H = 350, PHOTO_H = 148
@@ -577,7 +604,7 @@ function CardDeck({ day }) {
   const spinIce = () => {
     if (iceOut) return
     setIceOut(true)
-    setTimeout(() => { setIceIdx(i => (i+1) % ICEBREAKERS.length); setIceOut(false) }, 230)
+    setTimeout(() => { setIceIdx(i => (i+1) % dailyIce.length); setIceOut(false) }, 230)
   }
 
   const joke = JOKES[jokeIdx]
@@ -701,11 +728,11 @@ function CardDeck({ day }) {
             <p style={{ margin:0, fontSize:14, fontWeight:700, lineHeight:1.6, flex:1, color:C.text,
               opacity:iceOut?0:1, transform:iceOut?'scale(0.94) rotate(-1.5deg)':'scale(1)',
               transition:'opacity 0.22s, transform 0.22s' }}>
-              "{ICEBREAKERS[iceIdx]}"
+              "{dailyIce[iceIdx]}"
             </p>
             <div onClick={e => e.stopPropagation()}>
               <Tap onClick={spinIce} style={{ background:C.accentBg, border:`1px solid ${C.accentBdr}`, borderRadius:10, padding:'10px', textAlign:'center', marginTop:10 }}>
-                <span style={{ fontSize:12, fontWeight:700, color:C.accent }}>🎲 New question · {iceIdx+1}/{ICEBREAKERS.length}</span>
+                <span style={{ fontSize:12, fontWeight:700, color:C.accent }}>🎲 New question · {iceIdx+1}/{dailyIce.length}</span>
               </Tap>
             </div>
           </div>
