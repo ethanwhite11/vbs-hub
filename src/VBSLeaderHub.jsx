@@ -1757,7 +1757,13 @@ function PhotoGallery({ dayIdx }) {
 // ─── TODAY PAGE ───────────────────────────────────────────────────────────────
 function TodayPage({ myGroup, live, now, onChangeGroup, onHelp, preschoolSub, onToggleSub, onOpenGuide, homeScreenDone }) {
   const C = useC()
-  const dayIdx = live.dayIdx >= 0 ? live.dayIdx : (now < new Date('2026-07-13') ? 0 : DAYS.length - 1)
+  const schedDayIdx = live.dayIdx >= 0 ? live.dayIdx : (now < new Date('2026-07-13') ? 0 : DAYS.length - 1)
+  // After 1PM, advance content to next day so volunteers can prep ahead
+  const isAfterReset = now.getHours() >= 13
+  const dayIdx = (live.dayIdx >= 0 && isAfterReset && live.dayIdx + 1 < DAYS.length)
+    ? live.dayIdx + 1
+    : schedDayIdx
+  const showingTomorrow = dayIdx !== schedDayIdx
   const day = DAYS[dayIdx]
 
   return (
@@ -1765,7 +1771,7 @@ function TodayPage({ myGroup, live, now, onChangeGroup, onHelp, preschoolSub, on
       <NowHero myGroup={myGroup} live={live} onChangeGroup={onChangeGroup} onHelp={onHelp} preschoolSub={preschoolSub} />
       <HomeScreenBanner onOpen={onOpenGuide} done={homeScreenDone} />
       <div style={{ padding:'16px 0 calc(92px + env(safe-area-inset-bottom,0px))' }}>
-        <p style={{ margin:'0 0 10px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>Today</p>
+        <p style={{ margin:'0 0 10px',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>{showingTomorrow ? 'Tomorrow' : 'Today'}</p>
         <CardDeck day={day} />
         <p style={{ margin:'20px 0 0',fontSize:11,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',color:C.muted,paddingLeft:16 }}>This Week</p>
         <BuddyTrail dayIdx={dayIdx} />
