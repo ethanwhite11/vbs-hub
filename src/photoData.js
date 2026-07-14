@@ -20,10 +20,12 @@ export const PHOTO_DATA = {
   // ── Monday (shown Tuesday morning) ─────────────────────────────────────────
   // Drop files into: public/photos/day1/
   1: [
-    { id:'d1a', src:'/photos/day1/photo1.jpg', caption:'God is our creator'  },
-    { id:'d1b', src:'/photos/day1/photo2.jpg', caption:'Crew time'           },
-    { id:'d1c', src:'/photos/day1/photo3.jpg', caption:'Wild games'          },
-    { id:'d1d', src:'/photos/day1/photo4.jpg', caption:'Memory verse'        },
+    { id:'d1a', src:'/photos/day1/K33A0130.jpg', caption:'Day 1' },
+    { id:'d1b', src:'/photos/day1/K33A0145.jpg', caption:'Day 1' },
+    { id:'d1c', src:'/photos/day1/K33A0150.jpg', caption:'Day 1' },
+    { id:'d1d', src:'/photos/day1/K33A0177.jpg', caption:'Day 1' },
+    { id:'d1e', src:'/photos/day1/K33A0180.jpg', caption:'Day 1' },
+    { id:'d1f', src:'/photos/day1/K33A0213.jpg', caption:'Day 1' },
   ],
 
   // ── Tuesday (shown Wednesday morning) ──────────────────────────────────────

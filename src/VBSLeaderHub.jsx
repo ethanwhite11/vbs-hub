@@ -1771,7 +1771,7 @@ function PhotoGallery({ dayIdx }) {
   const photos     = dayIdx === 0 ? PHOTO_DATA.lastYear : (PHOTO_DATA[dayIdx] || PHOTO_DATA[1])
   const isLastYear = dayIdx === 0
   const prevDay    = dayIdx > 0 ? DAYS[dayIdx - 1] : null
-  const sectionLabel = isLastYear ? 'From Last Year' : `Yesterday · ${prevDay.label.split(' · ')[0]}`
+  const sectionLabel = isLastYear ? 'From Last Year' : `Day ${dayIdx} Photos`
 
   return (
     <div>
