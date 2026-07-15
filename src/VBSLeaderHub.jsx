@@ -585,11 +585,11 @@ function CardDeck({ day }) {
     boxShadow:'0 2px 8px rgba(0,0,0,0.06)',
   }
 
-  const PhotoHdr = ({ src, pos = 'center center' }) => (
+  const PhotoHdr = ({ src, pos = 'center center', size = 'cover' }) => (
     <div style={{
       position:'absolute', top:0, left:0, right:0, height:PHOTO_H,
       backgroundImage:`url(${src})`,
-      backgroundSize:'cover', backgroundPosition:pos,
+      backgroundSize:size, backgroundPosition:pos,
       WebkitMaskImage:'linear-gradient(to bottom, black 50%, transparent 100%)',
       maskImage:'linear-gradient(to bottom, black 50%, transparent 100%)',
       pointerEvents:'none',
@@ -619,7 +619,7 @@ function CardDeck({ day }) {
 
         {/* ── Card 1: Bible Point ── */}
         <Tap style={{ ...base }} onClick={() => setBible(b => !b)}>
-          <PhotoHdr src="/bible-point-image.jpg" pos="center 30%" />
+          <PhotoHdr src="/bible-point-image.jpg" pos="center 30%" size="130%" />
           <div style={{ position:'relative', display:'flex', flexDirection:'column', flex:1 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
               <div style={{ flex:1 }}>
@@ -660,7 +660,7 @@ function CardDeck({ day }) {
               overflow:'hidden', background:'#fff', border:`1px solid ${C.border}`,
               boxShadow:'0 2px 8px rgba(0,0,0,0.06)',
             }}>
-              <div style={{ height:PHOTO_H, backgroundImage:'url(/memory-verse-image.jpg)', backgroundSize:'cover', backgroundPosition:'center 25%', flexShrink:0,
+              <div style={{ height:PHOTO_H, backgroundImage:'url(/memory-verse-image.jpg)', backgroundSize:'cover', backgroundPosition:'center 55%', flexShrink:0,
                 WebkitMaskImage:'linear-gradient(to bottom, black 50%, transparent 100%)',
                 maskImage:'linear-gradient(to bottom, black 50%, transparent 100%)',
                 pointerEvents:'none' }} />
