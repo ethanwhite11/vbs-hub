@@ -31,10 +31,14 @@ export const PHOTO_DATA = {
   // ── Tuesday (shown Wednesday morning) ──────────────────────────────────────
   // Drop files into: public/photos/day2/
   2: [
-    { id:'d2a', src:'/photos/day2/photo1.jpg', caption:'God knows everything' },
-    { id:'d2b', src:'/photos/day2/photo2.jpg', caption:'Crew time'            },
-    { id:'d2c', src:'/photos/day2/photo3.jpg', caption:'Wild games'           },
-    { id:'d2d', src:'/photos/day2/photo4.jpg', caption:'Memory verse'         },
+    { id:'d2a', src:'/photos/day2/DSC_3414_VBSday2_PL05.jpg', caption:'Day 2' },
+    { id:'d2b', src:'/photos/day2/DSC_3504_VBSday2_PL05.jpg', caption:'Day 2' },
+    { id:'d2c', src:'/photos/day2/DSC_3508_VBSday2_PL05.jpg', caption:'Day 2' },
+    { id:'d2d', src:'/photos/day2/DSC_3545_VBSday2_PL05.jpg', caption:'Day 2' },
+    { id:'d2e', src:'/photos/day2/DSC_4110_VBSday2_PL05.jpg', caption:'Day 2' },
+    { id:'d2f', src:'/photos/day2/K33A0276.jpg',              caption:'Day 2' },
+    { id:'d2g', src:'/photos/day2/K33A0290.jpg',              caption:'Day 2' },
+    { id:'d2h', src:'/photos/day2/K33A0309.jpg',              caption:'Day 2' },
   ],
 
   // ── Wednesday (shown Thursday morning) ─────────────────────────────────────
