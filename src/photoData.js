@@ -44,10 +44,13 @@ export const PHOTO_DATA = {
   // ── Wednesday (shown Thursday morning) ─────────────────────────────────────
   // Drop files into: public/photos/day3/
   3: [
-    { id:'d3a', src:'/photos/day3/photo1.jpg', caption:'God is our safe place' },
-    { id:'d3b', src:'/photos/day3/photo2.jpg', caption:'Crew time'             },
-    { id:'d3c', src:'/photos/day3/photo3.jpg', caption:'Wild games'            },
-    { id:'d3d', src:'/photos/day3/photo4.jpg', caption:'Memory verse'          },
+    { id:'d3a', src:'/photos/day3/DSC_4617_VBSday3.jpg', caption:'Day 3' },
+    { id:'d3b', src:'/photos/day3/DSC_4629_VBSday3.jpg', caption:'Day 3' },
+    { id:'d3c', src:'/photos/day3/DSC_4653_VBSday3.jpg', caption:'Day 3' },
+    { id:'d3d', src:'/photos/day3/DSC_4671_VBSday3.jpg', caption:'Day 3' },
+    { id:'d3e', src:'/photos/day3/DSC_4909_VBSday3.jpg', caption:'Day 3' },
+    { id:'d3f', src:'/photos/day3/DSC_4938_VBSday3.jpg', caption:'Day 3' },
+    { id:'d3g', src:'/photos/day3/DSC_5240_VBSday3.jpg', caption:'Day 3' },
   ],
 
   // ── Thursday (shown Friday morning) ────────────────────────────────────────
