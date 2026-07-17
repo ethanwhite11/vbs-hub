@@ -56,10 +56,14 @@ export const PHOTO_DATA = {
   // ── Thursday (shown Friday morning) ────────────────────────────────────────
   // Drop files into: public/photos/day4/
   4: [
-    { id:'d4a', src:'/photos/day4/photo1.jpg', caption:'God is love'  },
-    { id:'d4b', src:'/photos/day4/photo2.jpg', caption:'Crew time'    },
-    { id:'d4c', src:'/photos/day4/photo3.jpg', caption:'Wild games'   },
-    { id:'d4d', src:'/photos/day4/photo4.jpg', caption:'Memory verse' },
+    { id:'d4a', src:'/photos/day4/DSC_5771_VBSday4.jpg', caption:'Day 4' },
+    { id:'d4b', src:'/photos/day4/DSC_5959_VBSday4.jpg', caption:'Day 4' },
+    { id:'d4c', src:'/photos/day4/DSC_6362_VBSday4.jpg', caption:'Day 4' },
+    { id:'d4d', src:'/photos/day4/DSC_6496_VBSday4.jpg', caption:'Day 4' },
+    { id:'d4e', src:'/photos/day4/DSC_6505_VBSday4.jpg', caption:'Day 4' },
+    { id:'d4f', src:'/photos/day4/DSC_6534_VBSday4.jpg', caption:'Day 4' },
+    { id:'d4g', src:'/photos/day4/DSC_6574_VBSday4.jpg', caption:'Day 4' },
+    { id:'d4h', src:'/photos/day4/DSC_6653_VBSday4.jpg', caption:'Day 4' },
   ],
 
 }
